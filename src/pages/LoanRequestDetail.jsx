@@ -11,7 +11,11 @@ export default function LoanRequestDetail() {
   return (
     <AppShell pageTitle="Audit Terminal" pageSubtitle="Asset Underwriting System">
       <div className="max-w-7xl mx-auto space-y-12 pb-24">
-        
+
+        <div className="rounded-xl border border-[#F5A623]/30 bg-[#F5A623]/5 px-5 py-3 text-[11px] font-black uppercase tracking-widest text-[#F5A623]">
+          Sample data. This screen is an illustration. It does not show a real loan request.
+        </div>
+
         {/* REQUESTER IDENTITY BANNER */}
         <div className="bg-white dark:bg-[#111827] p-10 rounded-[12px] border border-[#E8E8E8] dark:border-[#1E2A3A] flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-[#F5A623]"></div>
@@ -84,9 +88,9 @@ export default function LoanRequestDetail() {
              <div className="mt-10 p-8 rounded-xl bg-[#1D9E75]/5 border border-[#1D9E75]/10">
                 <div className="flex items-center gap-4 mb-4 text-[#1D9E75]">
                    <iconify-icon icon="lucide:sparkles" className="text-xl"></iconify-icon>
-                   <h5 className="text-[10px] font-black uppercase tracking-[0.2em]">AI Underwriting Prediction</h5>
+                   <h5 className="text-[10px] font-black uppercase tracking-[0.2em]">Illustrative Risk Note</h5>
                 </div>
-                <p className="text-xs text-[#1A1A1A] dark:text-[#FAFAF8] leading-relaxed italic">"Probability of default is estimated at **0.8%**. Requester has displayed a linear liquidity flow pattern with seasonal peaks. Recommending Vouch Tier expansion."</p>
+                <p className="text-xs text-[#1A1A1A] dark:text-[#FAFAF8] leading-relaxed italic">"Example text only. A real risk note would come from measured repayment data, which this prototype does not have yet."</p>
              </div>
           </div>
         </div>
@@ -103,7 +107,7 @@ export default function LoanRequestDetail() {
             </div>
             <div className="border-l border-[#E8E8E8] dark:border-[#1E2A3A] md:pl-12">
                <h4 className="text-lg font-black font-cabinet text-[#1A1A1A] dark:text-[#FAFAF8] uppercase tracking-widest mb-6">Direct Lending</h4>
-               <p className="text-xs text-[#8C8C8C] leading-relaxed mb-8">Deploy capital directly to fund the remaining **$50.00**. Earn 4.2% yield. Capital is 100% principal protected by community treasury.</p>
+               <p className="text-xs text-[#8C8C8C] leading-relaxed mb-8">Deploy capital directly to fund the remaining **$50.00**. Earn 4.2% yield. Lending carries risk. You can lose some or all of the capital. Principal and returns are not guaranteed.</p>
                <button className="w-full py-5 border border-[#1D9E75] text-[#1D9E75] rounded-[8px] text-[11px] font-black uppercase tracking-[0.2em] hover:bg-[#1D9E75] hover:text-white transition-all">
                   Deploy $50.00 Fund
                </button>

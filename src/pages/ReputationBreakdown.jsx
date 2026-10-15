@@ -79,7 +79,7 @@ export default function ReputationBreakdown() {
            <div className="space-y-8">
               <div className="bg-white dark:bg-[#111827] p-10 rounded-[12px] border border-[#E8E8E8] dark:border-[#1E2A3A] relative overflow-hidden">
                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5A623] opacity-[0.05] blur-3xl"></div>
-                 <h4 className="text-[10px] font-black text-[#F5A623] uppercase tracking-[0.3em] mb-8">AI Strategy Projection</h4>
+                 <h4 className="text-[10px] font-black text-[#F5A623] uppercase tracking-[0.3em] mb-8">Strategy Projection (illustrative)</h4>
                  <div className="space-y-6">
                     <div className="bg-[#FAFAF8] dark:bg-[#0A0F1E] p-6 rounded border border-[#E8E8E8] dark:border-[#1E2A3A]">
                        <p className="text-[11px] text-[#1A1A1A] dark:text-[#FAFAF8] leading-relaxed">Based on your current transaction velocity, your active score <span className="text-[#F5A623] font-black">{scoreNum}/100</span> puts you on track to elevate to the next Tier. Maintaining your Repayment Streak of {reputationData?.repaymentStreak || 0} is key to unlocking expanded limits.</p>

@@ -54,13 +54,13 @@
     "readyToBuild": "Ready to Build",
     "yourTrustScore": "Your Trust Score?",
     "ctaDesc": "Join thousands of users building financial identity on-chain. No bank required. No paperwork. Just your word — and your community's.",
-    "ctaFooter": "No KYC · No Collateral · 100% On-Chain",
+    "ctaFooter": "Testnet prototype · No collateral · Scores recorded on-chain",
     "footerText": "TrustLend Protocol · Hackathon Build 2026",
     "stats": {
       "totalLent": "Total Lent",
       "activeUsers": "Active Users",
       "avgTrustScore": "Avg Trust Score",
-      "defaultRate": "Default Rate"
+      "defaultRate": "Measured Default Rate"
     },
     "features": {
       "vouchBasedTitle": "Vouch-Based Trust",
@@ -269,11 +269,11 @@
     "weekly": "Weekly",
     "monthly": "Monthly",
     "seasonal": "Seasonal",
-    "repaymentSchedule": "AI Repayment Schedule ({{type}})",
+    "repaymentSchedule": "Repayment Schedule ({{type}})",
     "installment": "Installment {{index}}",
     "due": "Due {{date}}",
     "totalRepayment": "Total Repayment",
-    "aiTrustAssessment": "AI Trust Assessment",
+    "aiTrustAssessment": "Trust Assessment",
     "networkQuotient": "Network Quotient",
     "approvedUpTo": "Approved up to ${{amount}}",
     "repaymentHistory": "Repayment History",
@@ -317,7 +317,7 @@
     "totalFunds": "Total Funds",
     "openRequests": "Open Loan Requests",
     "avgReturn": "Average Return",
-    "defaultRate": "Default Rate",
+    "defaultRate": "Measured Default Rate",
     "tabLive": "Open Requests ({{count}})",
     "tabPortfolio": "My Portfolio ({{count}})",
     "deployed": "Deployed",

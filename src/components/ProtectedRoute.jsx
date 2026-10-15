@@ -1,11 +1,11 @@
 import { Navigate } from 'react-router-dom';
+import { getValidSession } from '../lib/session';
 
 /**
- * Guards any route behind wallet authentication.
- * No wallet in sessionStorage → redirect to /connect.
+ * Guards any route behind a signed sign-in.
+ * No valid, unexpired signature for the stored wallet → redirect to /connect.
  */
 export default function ProtectedRoute({ children }) {
-  const wallet = sessionStorage.getItem('tl_wallet');
-  if (!wallet) return <Navigate to="/connect" replace />;
+  if (!getValidSession()) return <Navigate to="/connect" replace />;
   return children;
 }

@@ -39,7 +39,7 @@
       "totalLent": "કુલ ધિરાણ",
       "activeUsers": "સક્રિય વપરાશકર્તાઓ",
       "avgTrustScore": "સરેરાશ ટ્રસ્ટ સ્કોર",
-      "defaultRate": "ડિફોલ્ટ દર"
+      "defaultRate": "Measured Default Rate"
     }
   },
   "dashboard": {
@@ -224,11 +224,11 @@
     "weekly": "સાપ્તાહિક",
     "monthly": "માસિક",
     "seasonal": "મોસમી",
-    "repaymentSchedule": "AI પુનઃચુકવણી શેડ્યૂલ ({{type}})",
+    "repaymentSchedule": "પુનઃચુકવણી શેડ્યૂલ ({{type}})",
     "installment": "હપ્તો {{index}}",
     "due": "તારીખ {{date}} સુધીમાં",
     "totalRepayment": "કુલ પુનઃચુકવણી",
-    "aiTrustAssessment": "AI ટ્રસ્ટ મૂલ્યાંકન",
+    "aiTrustAssessment": "Trust Assessment",
     "networkQuotient": "નેટવર્ક ભાગફળ",
     "approvedUpTo": "${{amount}} સુધી મંજૂર",
     "repaymentHistory": "પુનઃચુકવણી ઇતિહાસ",
@@ -272,7 +272,7 @@
     "totalFunds": "કુલ ફંડ",
     "openRequests": "ખુલ્લી લોન વિનંતીઓ",
     "avgReturn": "સરેરાશ વળતર",
-    "defaultRate": "ડિફોલ્ટ દર",
+    "defaultRate": "Measured Default Rate",
     "tabLive": "ખુલ્લી વિનંતીઓ ({{count}})",
     "tabPortfolio": "મારું પોર્ટફોલિયો ({{count}})",
     "deployed": "તૈનાત",

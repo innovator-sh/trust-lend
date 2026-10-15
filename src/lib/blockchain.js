@@ -9,7 +9,15 @@
  */
 
 import { ethers } from 'ethers';
-import ADDRESSES from './contracts.json';
+import { ADDRESSES as DEPLOYED } from '../contracts/addresses';
+
+// One source of truth: src/contracts/addresses.js, written by blockchain/scripts/deploy.js.
+const ADDRESSES = {
+  StableToken: DEPLOYED.TRUST_TOKEN, // the pool token (TRUST)
+  LendingPool: DEPLOYED.LENDING_POOL,
+  VouchSystem: DEPLOYED.VOUCH_SYSTEM,
+  chainId:     String(DEPLOYED.CHAIN_ID),
+};
 
 /* ══════════════════════════════════════════
    MINIMAL ABIs

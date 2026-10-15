@@ -39,7 +39,7 @@
       "totalLent": "एकूण कर्ज",
       "activeUsers": "सक्रिय वापरकर्ते",
       "avgTrustScore": "सरासरी ट्रस्ट स्कोर",
-      "defaultRate": "डिफॉल्ट दर"
+      "defaultRate": "Measured Default Rate"
     }
   },
   "dashboard": {
@@ -224,11 +224,11 @@
     "weekly": "साप्ताहिक",
     "monthly": "मासिक",
     "seasonal": "हंगामी",
-    "repaymentSchedule": "AI परतफेड वेळापत्रक ({{type}})",
+    "repaymentSchedule": "परतफेड वेळापत्रक ({{type}})",
     "installment": "हप्ता {{index}}",
     "due": "देय तारीख {{date}}",
     "totalRepayment": "एकूण परतफेड",
-    "aiTrustAssessment": "AI ट्रस्ट मूल्यांकन",
+    "aiTrustAssessment": "Trust Assessment",
     "networkQuotient": "नेटवर्क कोशंट",
     "approvedUpTo": "${{amount}} पर्यंत मंजूर",
     "repaymentHistory": "परतफेड इतिहास",
@@ -272,7 +272,7 @@
     "totalFunds": "एकूण फंड",
     "openRequests": "खुले कर्ज विनंती",
     "avgReturn": "सरासरी परतावा",
-    "defaultRate": "डिफ़ॉल्ट दर",
+    "defaultRate": "Measured Default Rate",
     "tabLive": "खुले विनंती ({{count}})",
     "tabPortfolio": "माझे पोर्टफोलिओ ({{count}})",
     "deployed": "उपयोजित",

@@ -146,3 +146,31 @@ begin
     execute format('create policy "prototype update" on public.%I for update to anon, authenticated using (true) with check (true)', t);
   end loop;
 end $$;
+
+/* KYC status guard */
+-- The app limits loans above $10 to users with kyc_status = 'verified'. The browser must not
+-- be able to set that value, so only the database owner or the service role can.
+-- Verify a user in the SQL Editor (it runs as the owner), for example:
+--   update public.users set kyc_status = 'verified' where wallet_address = '0xabc...';
+-- A browser request (role anon) can set 'pending' or 'submitted' only.
+
+create or replace function public.guard_kyc_status()
+returns trigger language plpgsql as $$
+begin
+  if current_user not in ('postgres', 'service_role', 'supabase_admin') then
+    if tg_op = 'INSERT' then
+      new.kyc_status := case when new.kyc_status = 'submitted' then 'submitted' else 'pending' end;
+    elsif new.kyc_status is distinct from old.kyc_status then
+      if new.kyc_status in ('verified', 'rejected') or old.kyc_status in ('verified', 'rejected') then
+        raise exception 'kyc_status can only be changed by an admin';
+      end if;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists users_guard_kyc on public.users;
+create trigger users_guard_kyc
+  before insert or update on public.users
+  for each row execute function public.guard_kyc_status();

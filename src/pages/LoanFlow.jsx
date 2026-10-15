@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createLoan, updateLoan, getUser, getTier, TIER_LIMITS, TIER_COLORS, nextTierInfo } from '../lib/supabase';
+import { createLoan, updateLoan, getUser, getTier, TIER_LIMITS, TIER_COLORS, nextTierInfo, NO_KYC_LIMIT } from '../lib/supabase';
 import {
   isBlockchainReady,
   requestLoan as blockchainRequestLoan,
@@ -158,7 +158,8 @@ function StepConfirm({ wallet, amount, onSuccess }) {
       } else {
         // Demo fallback — simulated hash, no MetaMask required
         const result = await mockBlockchainCreateLoan(amount);
-        tx_hash = result.tx_hash;
+        // Mark simulated hashes so they cannot be mistaken for real transactions.
+        tx_hash = `demo:${result.tx_hash}`;
       }
 
       // 3. Update Supabase → status: active + tx_hash
@@ -356,7 +357,11 @@ export default function LoanFlow() {
 
   const score  = user?.trust_score ?? 30;
   const tier   = getTier(score);
-  const limit  = TIER_LIMITS[tier];
+  const tierLimit = TIER_LIMITS[tier];
+  // Loans above the entry amount need verified KYC. An admin sets kyc_status = 'verified'.
+  const kycVerified = user?.kyc_status === 'verified';
+  const limit  = kycVerified ? tierLimit : Math.min(tierLimit, NO_KYC_LIMIT);
+  const cappedByKyc = tierLimit > limit;
   const tierColor = TIER_COLORS[tier];
   const next   = nextTierInfo(score);
   const STEP_LABELS = ['Select Path', 'Confirm', 'Success'];
@@ -426,6 +431,13 @@ export default function LoanFlow() {
           </React.Fragment>
         ))}
       </div>
+
+      {cappedByKyc && (
+        <div className="w-full max-w-md z-10 mb-4 rounded-2xl border border-[#F5A623]/30 bg-[#F5A623]/5 px-5 py-4 text-xs leading-relaxed text-[#F5A623]">
+          Your score allows up to ${tierLimit}. Loans above ${NO_KYC_LIMIT} need verified KYC
+          (status now: {user?.kyc_status || 'pending'}). You can borrow up to ${limit} today.
+        </div>
+      )}
 
       {/* card */}
       <div className="w-full max-w-md z-10">

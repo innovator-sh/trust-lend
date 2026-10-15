@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { upsertUser } from '../lib/supabase';
+import { buildSignInMessage, saveSession, verifySession } from '../lib/session';
 
 /* ── Ethereum / MetaMask helpers ── */
 async function connectMetaMask() {
@@ -11,18 +12,12 @@ async function connectMetaMask() {
 }
 
 async function signSIWE(address) {
-  const domain = window.location.host;
-  const nonce = Math.random().toString(36).slice(2);
-  const issuedAt = new Date().toISOString();
-  const message =
-    `${domain} wants you to sign in with your Ethereum account:\n${address}\n\n` +
-    `Welcome to TrustLend! Signing this message creates your on-chain identity.\n\n` +
-    `URI: ${window.location.origin}\nVersion: 1\nNonce: ${nonce}\nIssued At: ${issuedAt}`;
+  const message = buildSignInMessage(address);
   const signature = await window.ethereum.request({
     method: 'personal_sign',
     params: [message, address],
   });
-  return { message, signature, nonce };
+  return { message, signature };
 }
 
 /* ── tiny sub-components ── */
@@ -73,15 +68,18 @@ export default function ConnectWallet() {
 
       // Phase 2 – sign SIWE message
       setPhase(2);
-      const { signature } = await signSIWE(address);
+      const { message, signature } = await signSIWE(address);
       if (!signature) throw new Error('Signature cancelled');
 
-      // Phase 3 – write to Supabase
+      // Phase 3 – check the signature, then write to Supabase
       setPhase(3);
+      if (!verifySession({ address, message, signature })) {
+        throw new Error('Signature check failed. Please try again.');
+      }
       await upsertUser(address);
 
-      // persist wallet in sessionStorage so Onboarding can read it
-      sessionStorage.setItem('tl_wallet', address.toLowerCase());
+      // persist the signed session so protected pages can check it again
+      saveSession({ address, message, signature });
 
       // Phase 4 – done
       setPhase(4);

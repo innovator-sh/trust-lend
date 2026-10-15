@@ -7,6 +7,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
+import { getValidSession, clearSession } from '../lib/session';
 
 export const AMOY_CHAIN_ID  = 80002;
 export const LOCAL_CHAIN_ID = 31337;
@@ -74,14 +75,13 @@ export function WalletProvider({ children }) {
     setWalletAddress(lower);
     setChainId(Number(cid));
     setIsConnected(true);
-    sessionStorage.setItem('tl_wallet', lower);
     hydrateEthers(lower);
   }, [hydrateEthers]);
 
   useEffect(() => {
     if (!window.ethereum) return;
     const autoReconnect = async () => {
-      const saved = sessionStorage.getItem('tl_wallet');
+      const saved = getValidSession(); // only restore a wallet with a valid signed session
       if (!saved) return;
       try {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
@@ -99,8 +99,13 @@ export function WalletProvider({ children }) {
   useEffect(() => {
     if (!window.ethereum) return;
     const onAccountsChanged = (accounts) => {
+      const signedIn = getValidSession();
       if (accounts.length === 0) disconnectWallet();
-      else {
+      else if (signedIn && accounts[0].toLowerCase() !== signedIn) {
+        // The wallet switched to another account. That account has not signed in.
+        disconnectWallet();
+        toast.error('Account changed. Please sign in again.', { id: 'account-change' });
+      } else {
         window.ethereum.request({ method: 'eth_chainId' }).then(cid => {
           setAccount(accounts[0], parseInt(cid, 16));
         });
@@ -170,7 +175,7 @@ export function WalletProvider({ children }) {
     setSigner(null);
     setBalance('0.00');
     setIsConnected(false);
-    sessionStorage.removeItem('tl_wallet');
+    clearSession();
   }, []);
 
   return (

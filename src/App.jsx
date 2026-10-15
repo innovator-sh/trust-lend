@@ -18,6 +18,8 @@ import SovereignAudit      from './pages/SovereignAudit';
 import ReputationBreakdown from './pages/ReputationBreakdown';
 import TransactionHistory  from './pages/TransactionHistory';
 import TrustNetworkGraph   from './pages/TrustNetworkGraph';
+import Legal               from './pages/Legal';
+import TestnetBanner       from './components/TestnetBanner';
 
 import { ThemeProvider } from './context/ThemeContext';
 import { WalletProvider } from './context/WalletContext';
@@ -49,11 +51,13 @@ export default function App() {
           />
 
           <HashRouter>
+            <TestnetBanner />
             <DemoHealthCheck />
             <DemoMode />
             <AnimatePresence mode="wait">
               <Routes>
                 <Route path="/"           element={<Landing />} />
+                <Route path="/terms"      element={<Legal />} />
                 <Route path="/connect"    element={<ConnectWallet />} />
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/dashboard"    element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

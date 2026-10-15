@@ -196,7 +196,7 @@ export default function Borrow() {
 
           <div className="space-y-8">
             <div className="bg-white dark:bg-[#111827] p-8 rounded-[12px] border border-[#E8E8E8] dark:border-[#1E2A3A]">
-              <h5 className="text-[10px] font-black text-[#F5A623] uppercase tracking-[0.3em] mb-6">AI Execution Audit</h5>
+              <h5 className="text-[10px] font-black text-[#F5A623] uppercase tracking-[0.3em] mb-6">Execution Details</h5>
               {isLoading ? (
                   <Skeleton h="100px" />
               ) : (

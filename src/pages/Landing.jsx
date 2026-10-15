@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePublicPoolStats } from '../hooks/usePublicPoolStats';
 
 /* ─────────────── animated counter ─────────────── */
 function Counter({ to, prefix = '', suffix = '', duration = 2 }) {
@@ -80,16 +81,26 @@ export default function Landing() {
   const navigate = useNavigate();
   const [walletConnecting, setWalletConnecting] = useState(false);
   const [walletDone, setWalletDone] = useState(false);
+  const poolStats = usePublicPoolStats();
 
   const handleConnectWallet = () => {
     navigate('/connect');
   };
 
+  // Real numbers read from the LendingPool contract. Nothing here is invented.
+  const live = poolStats.status === 'ready';
   const stats = [
-    { label: 'Total Lent', value: 4820000, prefix: '$', suffix: '+' },
-    { label: 'Active Users', value: 12400, suffix: '+' },
-    { label: 'Avg Trust Score', value: 74, suffix: '/100' },
-    { label: 'Default Rate', value: 0, prefix: '', suffix: '%', fixed: '0.3%' },
+    { label: 'Pool Liquidity (TRUST)', value: live ? Math.round(poolStats.liquidity) : null },
+    { label: 'Active Loans', value: live ? poolStats.activeLoans : null },
+    { label: 'Lenders', value: live ? poolStats.lenders : null },
+    {
+      label: 'Measured Default Rate',
+      text: !live
+        ? '—'
+        : poolStats.defaultRatePct === null
+          ? 'No data yet'
+          : `${poolStats.defaultRatePct.toFixed(1)}% (${poolStats.finishedLoans} loans)`,
+    },
   ];
 
   const features = [
@@ -305,7 +316,7 @@ export default function Landing() {
               className="text-center"
             >
               <p className="text-3xl md:text-4xl font-black font-cabinet text-[#FAFAF8] tracking-tight">
-                {s.fixed ? s.fixed : <Counter to={s.value} prefix={s.prefix} suffix={s.suffix} />}
+                {s.text ? s.text : s.value === null ? '—' : <Counter to={s.value} />}
               </p>
               <p className="text-[10px] font-black uppercase tracking-widest text-[#8C8C8C] mt-2">
                 {s.label}
@@ -505,7 +516,7 @@ export default function Landing() {
             </button>
           </div>
           <p className="mt-8 text-[10px] font-black uppercase tracking-widest text-[#8C8C8C]">
-            No KYC · No Collateral · 100% On-Chain
+            Testnet prototype · No collateral · Scores recorded on-chain
           </p>
         </motion.div>
       </section>
@@ -521,9 +532,9 @@ export default function Landing() {
           </span>
         </div>
         <div className="flex gap-6 text-[10px] font-black uppercase tracking-widest text-[#8C8C8C]">
-          {['Protocol', 'Docs', 'Audit', 'GitHub'].map(l => (
-            <a key={l} href="#" className="hover:text-[#F5A623] transition-colors">{l}</a>
-          ))}
+          <a href="#/terms" className="hover:text-[#F5A623] transition-colors">Terms &amp; Privacy</a>
+          <a href="https://github.com/innovator-sh/trustlend" target="_blank" rel="noreferrer"
+             className="hover:text-[#F5A623] transition-colors">GitHub</a>
         </div>
       </footer>
     </div>

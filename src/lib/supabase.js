@@ -133,31 +133,13 @@ export async function refreshTrustScore(walletAddress) {
   return { score: newScore, tier: tierData };
 }
 
-/* ── Tier / Limit constants (shared across app) ── */
-export const TIER_ORDER  = ['Entry', 'Bronze', 'Silver', 'Gold', 'Platinum'];
-export const TIER_COLORS = { Entry: '#F5A623', Bronze: '#CD7F32', Silver: '#A8A9AD', Gold: '#FFD700', Platinum: '#E5E4E2' };
-export const TIER_LIMITS = { Entry: 10, Bronze: 50, Silver: 200, Gold: 1000, Platinum: 5000 };
-export const TIER_THRESHOLDS = { Entry: 0, Bronze: 40, Silver: 60, Gold: 75, Platinum: 90 };
-
-export function getTier(score) {
-  if (score >= 90) return 'Platinum';
-  if (score >= 75) return 'Gold';
-  if (score >= 60) return 'Silver';
-  if (score >= 40) return 'Bronze';
-  return 'Entry';
-}
-
-export function nextTierInfo(score) {
-  const thresholds = [
-    { tier: 'Bronze',   at: 40,  limit: 50   },
-    { tier: 'Silver',   at: 60,  limit: 200  },
-    { tier: 'Gold',     at: 75,  limit: 1000 },
-    { tier: 'Platinum', at: 90,  limit: 5000 },
-  ];
-  const next = thresholds.find(t => score < t.at);
-  if (!next) return null;
-  return { ...next, ptsNeeded: next.at - score };
-}
+/* ── Tier / Limit constants ──
+ * Defined once in src/utils/constants.js (they must match the contract). Re-exported here
+ * so older imports keep working.
+ */
+export {
+  TIER_ORDER, TIER_COLORS, TIER_LIMITS, TIER_THRESHOLDS, NO_KYC_LIMIT, getTier, nextTierInfo,
+} from '../utils/constants';
 
 /* ── Vouch helpers ── */
 
