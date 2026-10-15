@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { useWallet } from '../context/WalletContext';
 import { ADDRESSES } from '../contracts/addresses';
 import LendingPoolABI from '../contracts/LendingPool.json';
+import TrustTokenABI from '../contracts/TrustToken.json';
 import { useDemo } from '../context/DemoContext';
 import { showTxLoading, showTxSuccess, showTxError } from '../utils/txToast';
 import { translateContractError } from '../utils/contractErrors';
@@ -19,7 +20,9 @@ export function useLendingPool() {
     lenderCount: "0",
     avgInterestRate: "0"
   });
-  const [lenderBalance, setLenderBalance] = useState("0.0");
+  const [lenderBalance, setLenderBalance] = useState("0.0"); // current value of the lender's shares
+  const [lenderPosition, setLenderPosition] = useState({ principal: "0.0", value: "0.0", yieldEarned: "0.0" });
+  const [poolUsage, setPoolUsage] = useState({ poolValue: "0.0", onLoan: "0.0", defaultRatePct: null, finishedLoans: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -34,6 +37,8 @@ export function useLendingPool() {
         });
         setUserLoan(demoStateOverrides.userLoan);
         setLenderBalance("0.0");
+        setLenderPosition({ principal: "0.0", value: "0.0", yieldEarned: "0.0" });
+        setPoolUsage({ poolValue: demoStateOverrides.poolLiquidity.toString(), onLoan: "0.0", defaultRatePct: null, finishedLoans: 0 });
         setIsLoading(false);
         return;
     }
@@ -60,6 +65,22 @@ export function useLendingPool() {
           console.warn("LendingPool stats fetch error:", e);
       }
 
+      try {
+        const [value, onLoan, rate] = await Promise.all([
+          contract.getPoolValue(), contract.totalLoaned(), contract.getDefaultRate(),
+        ]);
+        const finished = Number(rate.finished);
+        setPoolUsage({
+          poolValue: ethers.formatUnits(value, 18),
+          onLoan: ethers.formatUnits(onLoan, 18),
+          // null = no finished loan yet, so no rate can be measured
+          defaultRatePct: finished === 0 ? null : Number(rate.rateBps) / 100,
+          finishedLoans: finished,
+        });
+      } catch (e) {
+        console.warn("LendingPool usage fetch error:", e);
+      }
+
       if (walletAddress) {
         try {
             const limit = await contract.getBorrowLimit(walletAddress);
@@ -84,8 +105,16 @@ export function useLendingPool() {
                 setUserLoan(null);
             }
 
-            const lBalance = await contract.getLenderBalance(walletAddress);
-            setLenderBalance(ethers.formatUnits(lBalance, 18));
+            const pos = await contract.getLenderPosition(walletAddress);
+            const principal = ethers.formatUnits(pos.principal, 18);
+            const value = ethers.formatUnits(pos.value, 18);
+            setLenderBalance(value);
+            setLenderPosition({
+              principal,
+              value,
+              // value minus principal. It is negative after a default, because lenders share the loss.
+              yieldEarned: ethers.formatUnits(pos.value - pos.principal, 18),
+            });
         } catch (e) {
             console.warn("LendingPool user stats fetch error:", e);
         }
@@ -141,13 +170,29 @@ export function useLendingPool() {
   
   const deposit = async (amount) => {
       if (!provider || !walletAddress) throw new Error("Wallet not connected");
+      const amountWei = ethers.parseUnits(amount.toString(), 18);
+      const signer = await provider.getSigner();
+
+      // 1. The pool pulls the tokens, so it needs an allowance first.
+      const token = new ethers.Contract(ADDRESSES.TRUST_TOKEN, TrustTokenABI.abi, signer);
+      const allowance = await token.allowance(walletAddress, ADDRESSES.LENDING_POOL);
+      if (allowance < amountWei) {
+          const approveId = showTxLoading("Approving TRUST for the pool...");
+          try {
+              const approveTx = await simulateTx(token.approve(ADDRESSES.LENDING_POOL, amountWei));
+              await approveTx.wait();
+              showTxSuccess(`${amount} TRUST approved`, approveTx.hash, approveId);
+          } catch (err) {
+              showTxError(translateContractError(err), approveId);
+              throw err;
+          }
+      }
+
+      // 2. Deposit.
       const id = showTxLoading("Deploying liquidity into pool...");
       try {
-          const signer = await provider.getSigner();
           const contract = new ethers.Contract(ADDRESSES.LENDING_POOL, LendingPoolABI.abi, signer);
-          const amountWei = ethers.parseUnits(amount.toString(), 18);
-          const txPromise = contract.depositToPool(amountWei);
-          const tx = await simulateTx(txPromise);
+          const tx = await simulateTx(contract.depositToPool(amountWei));
           await tx.wait();
           showTxSuccess(`Position established: ${amount} TRUST`, tx.hash, id);
           await fetchData();
@@ -182,6 +227,8 @@ export function useLendingPool() {
     userLoan, 
     poolStats, 
     lenderBalance, 
+    lenderPosition,
+    poolUsage,
     isLoading, 
     requestLoan, 
     makeRepayment, 

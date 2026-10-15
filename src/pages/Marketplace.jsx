@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 export default function Marketplace() {
   const { t } = useTranslation();
   const { isDarkMode } = useTheme();
-  const { address } = useWallet();
+  const { walletAddress } = useWallet();
   const navigate = useNavigate();
 
   const { poolStats, lenderBalance, deposit, isLoading } = useLendingPool();
@@ -20,7 +20,7 @@ export default function Marketplace() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleDeposit = async () => {
-    if (!address) {
+    if (!walletAddress) {
       toast.error("Please connect your wallet first.");
       return;
     }
@@ -99,14 +99,15 @@ export default function Marketplace() {
 
             <button 
                 onClick={handleDeposit}
-                disabled={isSubmitting || isLoading || !address}
+                disabled={isSubmitting || isLoading || !walletAddress}
                 className={`w-full mt-10 py-5 rounded-[8px] text-[11px] font-black uppercase tracking-widest transition-all active:scale-[0.98]
-                    ${(isSubmitting || isLoading || !address)
+                    ${(isSubmitting || isLoading || !walletAddress)
                         ? 'bg-[#1E2A3A] text-[#8C8C8C] cursor-not-allowed'
                         : 'bg-[#1D9E75] text-[#111827] hover:bg-opacity-90 shadow-[0_0_20px_rgba(29,158,117,0.2)]'
                     }`}>
               {isSubmitting ? t('marketplace.supplying') : t('marketplace.supplyCapital')}
             </button>
+            <p className="mt-4 text-[10px] leading-relaxed text-[#8C8C8C]">{t('marketplace.riskNote')}</p>
           </div>
 
           {/* Card: Your active portfolio  */}

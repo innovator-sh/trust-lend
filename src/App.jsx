@@ -12,7 +12,6 @@ import VouchInvite         from './pages/VouchInvite';
 import Borrow              from './pages/Borrow';
 import ActiveLoanDetail    from './pages/ActiveLoanDetail';
 import Marketplace         from './pages/Marketplace';
-import LoanRequestDetail   from './pages/LoanRequestDetail';
 import LenderPortfolio     from './pages/LenderPortfolio';
 import SovereignAudit      from './pages/SovereignAudit';
 import ReputationBreakdown from './pages/ReputationBreakdown';
@@ -67,7 +66,6 @@ export default function App() {
                 <Route path="/borrow"       element={<ProtectedRoute><Borrow /></ProtectedRoute>} />
                 <Route path="/loan/:id"     element={<ProtectedRoute><ActiveLoanDetail /></ProtectedRoute>} />
                 <Route path="/marketplace"  element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
-                <Route path="/request/:id"  element={<ProtectedRoute><LoanRequestDetail /></ProtectedRoute>} />
                 <Route path="/portfolio"    element={<ProtectedRoute><LenderPortfolio /></ProtectedRoute>} />
                 <Route path="/audit"        element={<ProtectedRoute><SovereignAudit /></ProtectedRoute>} />
                 <Route path="/reputation"   element={<ProtectedRoute><ReputationBreakdown /></ProtectedRoute>} />
