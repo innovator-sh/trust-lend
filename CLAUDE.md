@@ -12,7 +12,7 @@ Decentralized micro-lending dApp on Polygon: React/Vite frontend plus a Hardhat 
 
 ## Conventions
 - JavaScript with JSX (no TypeScript). ESM in the frontend (`"type": "module"`), CommonJS in `blockchain/`.
-- Styling is Tailwind plus the shared tokens in `src/index.css` and `src/aether.css`. Reuse the existing components in `src/components/` before adding new ones.
+- Styling is Tailwind plus the shared tokens in `src/index.css` and `src/trustlend.css`. Reuse the existing components in `src/components/` before adding new ones.
 - All user-facing strings go through i18next. Add every new key to all four files in `src/i18n/locales/` (`en`, `hi`, `gu`, `mr`).
 - Contract calls go through the hooks in `src/hooks/`. Map revert reasons with `src/utils/contractErrors.js` and surface transactions with `src/utils/txToast.jsx`.
 
@@ -35,6 +35,9 @@ Decentralized micro-lending dApp on Polygon: React/Vite frontend plus a Hardhat 
 - Addresses come only from `src/contracts/addresses.js` (written by `deploy.js`). Do not add a second address file.
 - Sign-in is a signed message in `src/lib/session.js`. Use `getValidSession()`, not `sessionStorage` values, to know who is signed in.
 - Loans above $10 need `users.kyc_status = 'verified'`. Only the database owner can set it (trigger in `supabase/schema.sql`). Re-run the schema after changes.
+- `ml-api/` is a separate Python service (FastAPI + scikit-learn). Its scores are advisory only: never write an ML score to the contract, Supabase or the store. Commands (from `ml-api/`): `pip install -r requirements-dev.txt`, `uvicorn app.main:app --port 8000`, `python -m pytest -q`, `python -m training.train`. The browser reads it through `src/lib/mlApi.js` (`VITE_ML_API_URL`) and shows `MlAssessmentCard`. There is no mock fallback: when the service is off, the card says so.
+- ML model files (`*.joblib`) are pickles. Load them only through `ml-api/app/model_store.py`, which checks the SHA-256 in `models/<set>/metadata.json`. After retraining, commit the new files with their `metadata.json`.
+- Keep ML feature scales as documented in `ml-api/app/features.py`. The original models need `voucher_quality` 0-100, `vouch_network_balance` 0-2, and so on.
 - Do not add fixed statistics or claims such as "AI", "guaranteed" or "default rate" to the UI. Show numbers from the contract, or label the text as sample data.
 - Local chain id is 31337 and Amoy is 80002; `NetworkGuard` blocks other networks.
 
@@ -46,6 +49,6 @@ Decentralized micro-lending dApp on Polygon: React/Vite frontend plus a Hardhat 
 
 ## Workflow
 - Write a short spec in `specs/` before any feature touching more than two files; plan first for contract changes.
-- Run `npm run build` (and lint the files you touched) before every commit.
+- Run `npm run build`, `npm run check:i18n` (fails when a `t()` key is missing from `en.json`) and lint the files you touched before every commit.
 - Commit messages: single-line subject, blank line, then details. No trailers or attribution lines.
 - Claude Code feature usage (context, skills, subagents, MCP, hooks): use the `claude-code-playbook` skill, opening only the topic file needed.

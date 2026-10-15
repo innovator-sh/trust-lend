@@ -99,6 +99,7 @@ TrustLend is a testnet prototype. It uses test tokens and holds no real money.
 
 - [docs/risk-model.md](docs/risk-model.md) - the scoring and limit rules, what is not measured yet, and how the rules should change.
 - [docs/regulatory-position.md](docs/regulatory-position.md) - the legal position, with open points for a lawyer. It is not legal advice.
+- [ml-api/README.md](ml-api/README.md) - the machine-learning service: what each model does, how a score is derived, where the inputs come from, and how well the models were measured. The scores are advice only. They do not change your on-chain score.
 - The Landing page shows numbers read from the contract, including the measured default rate. It shows "No data yet" until a loan is finished.
 - Sign-in uses a signed message that the app checks on each protected page. This is a browser check only. The database still needs server-side rules before it holds real data.
 

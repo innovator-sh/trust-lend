@@ -39,6 +39,24 @@ The contract counts loans issued, repaid and defaulted
 `getDefaultRate()`. The Landing page shows this measured rate, or "No data yet" until at
 least one loan is finished.
 
+## ML estimates (advisory, off-chain)
+
+The `ml-api/` service gives a machine-learning estimate next to the on-chain score. It is
+**advice only**. It never writes to the contract or the database, and it does not set any limit.
+
+- **Trust estimate:** a Random Forest that outputs the chance a borrower repays, shown as 0-100.
+- **Vouch pattern check:** two fixed rules plus an Isolation Forest, to flag possible fake vouch rings.
+- **Repayment pattern:** K-Means groups earners as daily, weekly or seasonal.
+- **Inputs come from the chain** (loan events, vouch events, voucher scores), not from the browser.
+
+The models are trained on **synthetic data** because no real history exists. They learned the
+synthetic rules, so they are not evidence of real-world accuracy. The service reports this itself
+at `/api/v1/model-info`, and the app shows it on the card. Details, measured results and the limits
+of both model sets are in [ml-api/README.md](../ml-api/README.md).
+
+Before an ML score may influence a limit, the project needs: real repayment data, measured accuracy on
+it, a rule for who may publish a score on chain, an audit trail, and a way to reverse a wrong score.
+
 ## How the rules should change when data exists
 
 1. Collect at least a few hundred finished loans per band before changing a limit.
