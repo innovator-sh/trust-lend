@@ -30,8 +30,9 @@ PATTERNS=(
   'AIza[0-9A-Za-z_-]{35}'
 )
 
-# Lines that contain these words are placeholders or code that reads a variable.
-PLACEHOLDER='your_|<[a-z_ -]+>|placeholder|example|changeme|xxxx|process[.]env|import[.]meta|secrets-ok'
+# Lines that contain these words are placeholders, code that reads a variable, or a labelled
+# SHA-256 digest (a file hash, not a key).
+PLACEHOLDER='your_|<[a-z_ -]+>|placeholder|example|changeme|xxxx|process[.]env|import[.]meta|secrets-ok|"sha256"'
 
 # Generated files with many hex hashes that are not secrets.
 EXCLUDE=(
@@ -43,6 +44,10 @@ EXCLUDE=(
 )
 
 found=0
+
+PATTERN_FILE=$(mktemp)
+trap 'rm -f "$PATTERN_FILE"' EXIT
+printf '%s\n' "${PATTERNS[@]}" > "$PATTERN_FILE"
 
 report() { # report <label> <text>
   echo "  [$1] $2"
@@ -61,43 +66,43 @@ scan_ref() { # scan_ref <tree-ish>
     esac
   done < <(git ls-tree -r --name-only "$ref")
 
-  # 2. Secret patterns in file content
-  local p out
-  for p in "${PATTERNS[@]}"; do
-    # git grep prints "ref:path:line:content". Test the placeholder words on the content only,
-    # so a file name such as .env.example does not hide a real value.
-    out=$(git grep -nIE -e "$p" "$ref" -- . "${EXCLUDE[@]}" 2>/dev/null       | awk -v re="$PLACEHOLDER" '{ c=$0; sub(/^[^:]*:[^:]*:[^:]*:/, "", c); if (c !~ re) print }' || true)
-    if [ -n "$out" ]; then
-      while IFS= read -r line; do
-        # Hide the matched value; show file and line number only.
-        report "$short" "$(echo "$line" | cut -d: -f2-3) possible secret (pattern: ${p:0:28}...)"
-      done <<< "$out"
-    fi
-  done
+  # 2. Secret patterns in file content (one combined grep for all patterns)
+  # git grep prints "ref:path:line:content". Test the placeholder words on the content only,
+  # so a file name such as .env.example does not hide a real value.
+  local out
+  out=$(git grep -nIE -f "$PATTERN_FILE" "$ref" -- . "${EXCLUDE[@]}" 2>/dev/null \
+    | awk -v re="$PLACEHOLDER" '{ c=$0; sub(/^[^:]*:[^:]*:[^:]*:/, "", c); if (c !~ re) print }' || true)
+  if [ -n "$out" ]; then
+    while IFS= read -r line; do
+      # Hide the matched value; show file and line number only.
+      report "$short" "$(echo "$line" | cut -d: -f2-3) possible secret"
+    done <<< "$out"
+  fi
 }
 
 scan_worktree() {
-  local f p hits
+  local f out
+  local files=()
   while IFS= read -r f; do
     case "$f" in
       *.env.example) continue ;;
       .env|*/.env|.env.*|*/.env.*)
         # Ignored files are not listed here, so a hit means git would track it.
         report "worktree" "env file not ignored: $f"; continue ;;
-    esac
-    case "$f" in
       blockchain/artifacts/*|src/contracts/*.json|package-lock.json|blockchain/package-lock.json|scripts/check-secrets.sh) continue ;;
     esac
-    [ -f "$f" ] || continue
-    for p in "${PATTERNS[@]}"; do
-      hits=$(grep -nIE -e "$p" "$f" 2>/dev/null | grep -vE "$PLACEHOLDER" || true)
-      if [ -n "$hits" ]; then
-        while IFS= read -r line; do
-          report "worktree" "$f:${line%%:*} possible secret (pattern: ${p:0:28}...)"
-        done <<< "$hits"
-      fi
-    done
+    [ -f "$f" ] && files+=("$f")
   done < <(git ls-files --cached --others --exclude-standard)
+
+  [ "${#files[@]}" -gt 0 ] || return 0
+  # grep -H prints "path:line:content". Test the placeholder words on the content only.
+  out=$(printf '%s\0' "${files[@]}" | xargs -0 grep -HnIE -f "$PATTERN_FILE" 2>/dev/null \
+    | awk -v re="$PLACEHOLDER" '{ c=$0; sub(/^[^:]*:[^:]*:/, "", c); if (c !~ re) print }' || true)
+  if [ -n "$out" ]; then
+    while IFS= read -r line; do
+      report "worktree" "$(echo "$line" | cut -d: -f1-2) possible secret"
+    done <<< "$out"
+  fi
 }
 
 case "${1:-}" in
