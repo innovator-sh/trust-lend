@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Blocks a push when the secret check fails. Installed locally; not versioned.
+zero=0000000000000000000000000000000000000000
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue                 # deleting a branch
+  if [ "$remote_sha" = "$zero" ]; then range="$local_sha"; else range="$remote_sha..$local_sha"; fi
+  echo "pre-push: secret check on $local_ref ($range)"
+  scripts/check-secrets.sh --range "$range" || exit 1
+done
+exit 0
