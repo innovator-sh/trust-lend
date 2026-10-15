@@ -31,6 +31,11 @@ Decentralized micro-lending dApp on Polygon: React/Vite frontend plus a Hardhat 
 - `LoanStatus.Active` is enum value 0, which is also the value of an empty record. Always check `loan.amount > 0` with the status.
 - Score rules: a wallet starts at 30 on its first loan request, a score below 20 cannot borrow, a repayment within 1 day of the loan start gives no bonus, `markDefault` works only after the due date. The Collateral path (1) is disabled. VouchBacked (0) needs 5 TRUST of active vouch stake.
 - Run `cd blockchain && npm test` after any contract change. After a change to a function signature, run `npm run deploy:local` so `src/contracts/*.json` refresh.
+- The tier table lives only in `src/utils/constants.js` (re-exported by `src/lib/supabase.js`). It must match `LendingPool.getBorrowLimit`: $10 / $50 / $200 / $500 at scores 20 / 40 / 60 / 80. Change both together.
+- Addresses come only from `src/contracts/addresses.js` (written by `deploy.js`). Do not add a second address file.
+- Sign-in is a signed message in `src/lib/session.js`. Use `getValidSession()`, not `sessionStorage` values, to know who is signed in.
+- Loans above $10 need `users.kyc_status = 'verified'`. Only the database owner can set it (trigger in `supabase/schema.sql`). Re-run the schema after changes.
+- Do not add fixed statistics or claims such as "AI", "guaranteed" or "default rate" to the UI. Show numbers from the contract, or label the text as sample data.
 - Local chain id is 31337 and Amoy is 80002; `NetworkGuard` blocks other networks.
 
 ## Guardrails
