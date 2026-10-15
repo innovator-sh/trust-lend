@@ -8,6 +8,8 @@ async function main() {
   const [deployer] = await hre.ethers.getSigners();
   console.log("Deploying with account:", deployer.address);
 
+  const deployBlock = await hre.ethers.provider.getBlockNumber();
+
   // 1. Deploy TrustToken
   const TrustToken = await hre.ethers.getContractFactory("TrustToken");
   const trustToken = await TrustToken.deploy();
@@ -68,6 +70,7 @@ async function main() {
   REPUTATION_NFT: "${reputationNFTAddr}",
   VOUCH_SYSTEM: "${vouchSystemAddr}",
   CHAIN_ID: ${hre.network.config.chainId || 31337},
+  DEPLOY_BLOCK: ${deployBlock},
   EXPLORER: "${explorerUrl}"
 };
 
@@ -84,6 +87,7 @@ export const explorerAddrUrl = (addr) => ADDRESSES.EXPLORER ? \`\${ADDRESSES.EXP
     chainId: String(hre.network.config.chainId || 31337),
     deployedAt: new Date().toISOString(),
     deployer: deployer.address,
+    deployBlock,
     TrustToken: trustTokenAddr,
     ReputationNFT: reputationNFTAddr,
     VouchSystem: vouchSystemAddr,
