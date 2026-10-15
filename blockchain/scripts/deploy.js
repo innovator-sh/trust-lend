@@ -41,6 +41,17 @@ async function main() {
   await (await reputationNFT.setLendingPool(lendingPoolAddr)).wait();
   await (await vouchSystem.setLendingPool(lendingPoolAddr)).wait();
 
+  // 5b. Production switches. A test network keeps the faucet and open vouching.
+  //     Any other network gets the faucet off and a repaid-loan rule for vouchers.
+  const isTestNetwork = ["hardhat", "localhost", "amoy"].includes(hre.network.name);
+  if (!isTestNetwork) {
+    console.log("Real network: disabling the faucet and requiring voucher history...");
+    await (await trustToken.setFaucetEnabled(false)).wait();
+    await (await vouchSystem.setMinVoucherRepaidLoans(1)).wait();
+  } else if (process.env.REQUIRE_VOUCHER_HISTORY === "true") {
+    await (await vouchSystem.setMinVoucherRepaidLoans(1)).wait();
+  }
+
   // 6. Seed the pool with liquidity (500k TRUST).
   //    Use depositToPool so the pool counts the tokens. A plain transfer is NOT counted.
   console.log("Seeding pool with 500,000 TRUST...");

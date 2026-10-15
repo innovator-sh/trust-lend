@@ -112,6 +112,12 @@ contract LendingPool is Ownable2Step, ReentrancyGuard, Pausable {
     /// @notice Number of loans currently in Active status.
     uint256 public totalActiveLoans;
 
+    /// @notice Loans ever issued, repaid in full, and defaulted. A default that the
+    ///         borrower repays later still counts as defaulted. Use them to measure the default rate.
+    uint256 public totalLoansIssued;
+    uint256 public totalLoansRepaid;
+    uint256 public totalLoansDefaulted;
+
     /// @notice Running count of all unique lenders who deposited at least once.
     uint256 public totalLenders;
 
@@ -408,6 +414,7 @@ contract LendingPool is Ownable2Step, ReentrancyGuard, Pausable {
         totalPoolLiquidity -= amount;
         totalLoaned += amount;
         totalActiveLoans++;
+        totalLoansIssued++;
         _activeInterestSum += rate;
 
         // Disburse
@@ -462,6 +469,7 @@ contract LendingPool is Ownable2Step, ReentrancyGuard, Pausable {
                 totalActiveLoans--;
                 _activeInterestSum -= loan.interestRate;
                 loansRepaid[msg.sender]++;
+                totalLoansRepaid++;
                 _increaseTrustScore(msg.sender);
                 _settleVouches(msg.sender, false);
             }
@@ -525,6 +533,7 @@ contract LendingPool is Ownable2Step, ReentrancyGuard, Pausable {
 
         loan.status = LoanStatus.Defaulted;
         totalActiveLoans--;
+        totalLoansDefaulted++;
         _activeInterestSum -= loan.interestRate;
 
         // Write off the principal that is still unpaid.
@@ -768,6 +777,16 @@ contract LendingPool is Ownable2Step, ReentrancyGuard, Pausable {
         avgInterestRate = totalActiveLoans > 0
             ? _activeInterestSum / totalActiveLoans
             : 0;
+    }
+
+    /**
+     * @notice Returns the measured default rate in basis points (100 = 1%).
+     * @return rateBps  Defaulted loans divided by finished loans (repaid plus defaulted).
+     * @return finished Number of finished loans. 0 means there is no data yet.
+     */
+    function getDefaultRate() external view returns (uint256 rateBps, uint256 finished) {
+        finished = totalLoansRepaid + totalLoansDefaulted;
+        rateBps = finished == 0 ? 0 : (totalLoansDefaulted * 10_000) / finished;
     }
 
     /**

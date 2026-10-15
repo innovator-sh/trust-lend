@@ -23,6 +23,11 @@ contract TrustToken is ERC20, Ownable {
     /// @notice Last claim timestamp per wallet
     mapping(address => uint256) public lastClaimed;
 
+    /// @notice The faucet is for test networks. The owner switches it off on a real network.
+    bool public faucetEnabled = true;
+
+    event FaucetSet(bool enabled);
+
     /* ── Events ── */
     event TokensClaimed(address indexed claimer, uint256 amount, uint256 timestamp);
 
@@ -39,6 +44,7 @@ contract TrustToken is ERC20, Ownable {
      * @dev    Perfect for hackathon demos — judges can get tokens themselves.
      */
     function claimTestTokens() external {
+        require(faucetEnabled, "TrustToken: faucet disabled");
         require(
             block.timestamp >= lastClaimed[msg.sender] + FAUCET_COOLDOWN,
             "TrustToken: wait 24h between claims"
@@ -58,6 +64,12 @@ contract TrustToken is ERC20, Ownable {
         uint256 nextTime = lastClaimed[account] + FAUCET_COOLDOWN;
         if (block.timestamp >= nextTime) return 0;
         return nextTime - block.timestamp;
+    }
+
+    /// @notice Owner switches the faucet on or off.
+    function setFaucetEnabled(bool enabled) external onlyOwner {
+        faucetEnabled = enabled;
+        emit FaucetSet(enabled);
     }
 
     /* ── Owner-only mint ── */

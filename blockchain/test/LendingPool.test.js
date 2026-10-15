@@ -404,4 +404,60 @@ describe("LendingPool", () => {
         .to.be.revertedWithCustomError(f.pool, "EnforcedPause");
     });
   });
+  describe("measured default rate", () => {
+    it("reports no data before any loan is finished", async () => {
+      const f = await loadFixture(deployFixture);
+      const [rate, finished] = await f.pool.getDefaultRate();
+      expect(rate).to.equal(0n);
+      expect(finished).to.equal(0n);
+    });
+
+    it("counts issued, repaid and defaulted loans (1 repaid + 1 defaulted = 50%)", async () => {
+      const f = await loadFixture(deployFixture);
+      await borrow(f, E(10), 30); // borrower repays
+      await time.increase(2 * DAY);
+      await repayAll(f);
+
+      await f.pool.connect(f.other).requestLoan(E(10), 30, PATH.TrustOnly); // other defaults
+      await time.increase(31 * DAY);
+      await f.pool.markDefault(f.other.address);
+
+      expect(await f.pool.totalLoansIssued()).to.equal(2n);
+      expect(await f.pool.totalLoansRepaid()).to.equal(1n);
+      expect(await f.pool.totalLoansDefaulted()).to.equal(1n);
+      const [rate, finished] = await f.pool.getDefaultRate();
+      expect(rate).to.equal(5000n);
+      expect(finished).to.equal(2n);
+    });
+  });
+
+  describe("faucet and voucher limits", () => {
+    it("lets the owner switch the faucet off", async () => {
+      const f = await loadFixture(deployFixture);
+      await f.token.connect(f.other).claimTestTokens(); // works while enabled
+      await f.token.setFaucetEnabled(false);
+      await expect(f.token.connect(f.borrower).claimTestTokens())
+        .to.be.revertedWith("TrustToken: faucet disabled");
+      await expect(f.token.connect(f.other).setFaucetEnabled(true))
+        .to.be.revertedWithCustomError(f.token, "OwnableUnauthorizedAccount");
+    });
+
+    it("caps the active stakes of one voucher", async () => {
+      const f = await loadFixture(deployFixture);
+      await f.token.connect(f.voucher).approve(await f.vouch.getAddress(), E(1000));
+      // 2 borrowers x 10 vouches = 20 stakes (the per-borrower cap is 10)
+      const b1 = ethers.Wallet.createRandom().address;
+      const b2 = ethers.Wallet.createRandom().address;
+      const b3 = ethers.Wallet.createRandom().address;
+      for (let i = 0; i < 10; i++) await f.vouch.connect(f.voucher).stakeForBorrower(b1, E(1));
+      for (let i = 0; i < 10; i++) await f.vouch.connect(f.voucher).stakeForBorrower(b2, E(1));
+      expect(await f.vouch.activeStakeCount(f.voucher.address)).to.equal(20n);
+      await expect(f.vouch.connect(f.voucher).stakeForBorrower(b3, E(1)))
+        .to.be.revertedWith("Too many active stakes");
+      // Settling a stake frees a slot.
+      await f.vouch.connect(f.voucher).reclaimStake(0);
+      expect(await f.vouch.activeStakeCount(f.voucher.address)).to.equal(19n);
+      await f.vouch.connect(f.voucher).stakeForBorrower(b3, E(1));
+    });
+  });
 });

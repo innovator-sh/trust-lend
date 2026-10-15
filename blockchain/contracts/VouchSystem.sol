@@ -38,6 +38,9 @@ contract VouchSystem is Ownable2Step {
     /// @notice Most unsettled vouches one borrower can have. This bounds the loops.
     uint256 public constant MAX_ACTIVE_VOUCHES_PER_BORROWER = 10;
 
+    /// @notice Most unsettled stakes one voucher can hold. It limits fake vouch rings.
+    uint256 public constant MAX_ACTIVE_STAKES_PER_VOUCHER = 20;
+
     /// @notice Repaid loans a wallet needs before it can vouch. 0 means no limit.
     /// @dev    Set to 1 or more on a production network. Keep 0 for local demos.
     uint256 public minVoucherRepaidLoans;
@@ -56,6 +59,8 @@ contract VouchSystem is Ownable2Step {
     mapping(address => uint256[]) public borrowerVouches;
     // voucher → cumulative staked amount (not settled)
     mapping(address => uint256) public totalStakedBy;
+    // voucher → number of stakes that are not settled
+    mapping(address => uint256) public activeStakeCount;
 
     /* ── Events ── */
     event VouchStaked(
@@ -103,6 +108,11 @@ contract VouchSystem is Ownable2Step {
             "Too many active vouches"
         );
 
+        require(
+            activeStakeCount[msg.sender] < MAX_ACTIVE_STAKES_PER_VOUCHER,
+            "Too many active stakes"
+        );
+
         if (minVoucherRepaidLoans > 0) {
             require(lendingPool != address(0), "Pool not set");
             require(
@@ -127,6 +137,7 @@ contract VouchSystem is Ownable2Step {
 
         borrowerVouches[borrower].push(vouchId);
         totalStakedBy[msg.sender] += amount;
+        activeStakeCount[msg.sender] += 1;
 
         emit VouchStaked(vouchId, msg.sender, borrower, amount);
         return vouchId;
@@ -211,6 +222,7 @@ contract VouchSystem is Ownable2Step {
         require(!vouch.released && !vouch.slashed, "Vouch already settled");
 
         totalStakedBy[vouch.voucher] -= vouch.amount;
+        activeStakeCount[vouch.voucher] -= 1;
         _removeFromBorrower(vouch.borrower, vouchId);
 
         if (slash) {
