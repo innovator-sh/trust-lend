@@ -28,7 +28,7 @@ export default function Borrow() {
   const pathways = [
     { id: 2, label: t('borrow.reputationOnlyTitle'), desc: t('borrow.reputationOnlyDesc'), icon: "lucide:trending-up", rate: "7.1%", vouchers: 0 },
     { id: 0, label: t('borrow.communityVouchingTitle'), desc: t('borrow.communityVouchingDesc'), icon: "lucide:users-2", rate: "4.2%", vouchers: 3 },
-    { id: 1, label: t('borrow.digitalCollateralTitle'), desc: t('borrow.digitalCollateralDesc'), icon: "lucide:shield-check", rate: "2.8%", vouchers: 0 }
+    { id: 1, label: t('borrow.digitalCollateralTitle'), desc: t('borrow.digitalCollateralDesc'), icon: "lucide:shield-check", rate: "2.8%", vouchers: 0, unavailable: true } // the contract has no collateral logic yet
   ];
 
   const handleRequestLoan = async () => {
@@ -75,7 +75,7 @@ export default function Borrow() {
         {/* Pathway Selection */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {pathways.map((path) => (
+          {pathways.filter((p) => !p.unavailable).map((path) => (
              <div key={path.id} 
                 onClick={() => setPathway(path.id)}
                 className={`bg-white dark:bg-[#111827] p-8 rounded-[12px] border-2 cursor-pointer flex flex-col relative overflow-hidden group transition-all

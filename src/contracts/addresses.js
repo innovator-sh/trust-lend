@@ -1,11 +1,12 @@
 export const ADDRESSES = {
-  TRUST_TOKEN: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-  LENDING_POOL: "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-  REPUTATION_NFT: "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-  VOUCH_SYSTEM: "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+  TRUST_TOKEN: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  LENDING_POOL: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+  REPUTATION_NFT: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+  VOUCH_SYSTEM: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
   CHAIN_ID: 31337,
-  EXPLORER: "http://localhost:8545"
+  EXPLORER: ""
 };
 
-export const explorerTxUrl = (hash) => `${ADDRESSES.EXPLORER}/tx/${hash}`;
-export const explorerAddrUrl = (addr) => `${ADDRESSES.EXPLORER}/address/${addr}`;
+// A local chain has no block explorer. The helpers return "#" in that case.
+export const explorerTxUrl = (hash) => ADDRESSES.EXPLORER ? `${ADDRESSES.EXPLORER}/tx/${hash}` : "#";
+export const explorerAddrUrl = (addr) => ADDRESSES.EXPLORER ? `${ADDRESSES.EXPLORER}/address/${addr}` : "#";

@@ -20,6 +20,59 @@ export function translateContractError(error) {
     return 'Not enough TRUST. Claim test tokens first.';
   }
 
+  // Revert reasons from LendingPool and VouchSystem
+  if (lowerMsg.includes('active loan exists') || lowerMsg.includes('already has active loan')) {
+    return 'You have an active loan. Repay it before borrowing again.';
+  }
+
+  if (lowerMsg.includes('unpaid defaulted loan')) {
+    return 'You have an unpaid defaulted loan. Repay it before borrowing again.';
+  }
+
+  if (lowerMsg.includes('exceeds trust limit')) {
+    return 'This amount is above your borrowing limit.';
+  }
+
+  if (lowerMsg.includes('trust score too low')) {
+    return 'Your trust score is too low to borrow right now.';
+  }
+
+  if (lowerMsg.includes('collateral path unavailable')) {
+    return 'Collateral loans are not available yet. Choose another option.';
+  }
+
+  if (lowerMsg.includes('not enough vouch stake')) {
+    return 'This option needs at least 5 TRUST of vouch stake. Ask a voucher first.';
+  }
+
+  if (lowerMsg.includes('insufficient pool liquidity') || lowerMsg.includes('insufficient free liquidity')) {
+    return 'Not enough free liquidity in the pool right now.';
+  }
+
+  if (lowerMsg.includes('loan not overdue')) {
+    return 'This loan is not overdue yet.';
+  }
+
+  if (lowerMsg.includes('overpayment')) {
+    return 'The payment is more than the amount you owe.';
+  }
+
+  if (lowerMsg.includes('lendingpool: exceeds balance')) {
+    return 'You cannot withdraw more than your pool balance.';
+  }
+
+  if (lowerMsg.includes('stake below minimum')) {
+    return 'The minimum stake is 1 TRUST.';
+  }
+
+  if (lowerMsg.includes('too many active vouches')) {
+    return 'This borrower already has the maximum number of vouches.';
+  }
+
+  if (lowerMsg.includes('borrower has an active loan')) {
+    return 'You cannot take back this stake while the borrower has an active loan.';
+  }
+
   if (lowerMsg.includes('already has active loan')) {
     return 'You have an active loan. Repay it before borrowing again.';
   }
