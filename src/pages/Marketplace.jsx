@@ -85,14 +85,14 @@ export default function Marketplace() {
 
               <div className="flex justify-between items-end border-t border-[#E8E8E8] dark:border-[#1E2A3A] pt-6">
                  <div>
-                    <p className="text-[10px] font-black text-[#8C8C8C] uppercase tracking-widest mb-1">Expected APY</p>
+                    <p className="text-[10px] font-black text-[#8C8C8C] uppercase tracking-widest mb-1">Avg Loan Rate</p>
                     <p className="text-xl font-black text-[#1D9E75] font-cabinet">
-                        {isLoading ? '...' : `${Number(poolStats?.avgInterestRate || 0)}%`} Variate
+                        {isLoading ? '...' : `${Number(poolStats?.avgInterestRate || 0)}%`}
                     </p>
                  </div>
                  <div className="text-right">
                     <p className="text-[10px] font-black text-[#8C8C8C] uppercase tracking-widest mb-1">Risk Profile</p>
-                    <p className="text-sm font-black text-[#1D9E75] uppercase tracking-widest">Algorithmic Base</p>
+                    <p className="text-sm font-black text-[#1D9E75] uppercase tracking-widest">Shared Pool Risk</p>
                  </div>
               </div>
             </div>

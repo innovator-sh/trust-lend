@@ -20,7 +20,7 @@ export default function LenderPortfolio() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
            {[
              { label: 'Deployed Principal', val: isLoading ? '...' : `$${balanceNum.toLocaleString()}`, sub: 'TrustLend Core Pool', color: 'text-[#1A1A1A] dark:text-[#FAFAF8]' },
-             { label: 'Network APY', val: isLoading ? '...' : `${Number(poolStats?.avgInterestRate || 0)}%`, sub: 'Current Active Yield', color: 'text-[#1D9E75]' },
+             { label: 'Avg Loan Rate', val: isLoading ? '...' : `${Number(poolStats?.avgInterestRate || 0)}%`, sub: 'Across active loans, not a guaranteed return', color: 'text-[#1D9E75]' },
              { label: 'Reputation Mined', val: 'Active', sub: 'Mining Enabled', color: 'text-[#F5A623]' }
            ].map((p, i) => (
              <div key={i} className="bg-white dark:bg-[#111827] p-10 rounded-[12px] border border-[#E8E8E8] dark:border-[#1E2A3A] relative overflow-hidden group">
@@ -59,7 +59,7 @@ export default function LenderPortfolio() {
                       <div className="text-right flex items-center gap-12">
                          <div>
                             <p className="text-sm font-black text-[#1A1A1A] dark:text-[#FAFAF8]">${balanceNum.toLocaleString()}</p>
-                            <p className="text-[9px] font-black text-[#1D9E75] uppercase tracking-widest mt-1">{Number(poolStats?.avgInterestRate || 0)}% Yield</p>
+                            <p className="text-[9px] font-black text-[#1D9E75] uppercase tracking-widest mt-1">{Number(poolStats?.avgInterestRate || 0)}% Avg Rate</p>
                          </div>
                          <div className="hidden md:block">
                             <button className="px-6 py-3 rounded border border-[#E8E8E8] dark:border-[#1E2A3A] text-[9px] font-black uppercase tracking-widest text-[#8C8C8C] cursor-auto group-hover:text-[#F5A623] group-hover:border-[#F5A623] transition-all">Algorithmic Risk</button>

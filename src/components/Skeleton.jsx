@@ -1,6 +1,6 @@
 /**
  * Skeleton.jsx
- * Animated pulse skeleton loader matching Aether dark theme.
+ * Animated pulse skeleton loader matching the TrustLend dark theme.
  * Usage: <Skeleton w="120px" h="28px" /> or <Skeleton w="100%" h="16px" r="8px" />
  */
 import React from 'react';

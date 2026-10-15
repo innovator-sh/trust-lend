@@ -53,7 +53,8 @@ export function useLendingPool() {
             totalLiquidity: ethers.formatUnits(stats.liquidity, 18), // consistency
             activeLoans: stats.activeLoans.toString(),
             lenderCount: stats.lenderCount.toString(),
-            avgInterestRate: stats.avgInterestRate.toString()
+            // The contract returns basis points (420 = 4.2%). The UI shows percent.
+            avgInterestRate: (Number(stats.avgInterestRate) / 100).toString()
         });
       } catch (e) {
           console.warn("LendingPool stats fetch error:", e);

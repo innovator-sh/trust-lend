@@ -26,7 +26,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
           </div>
           <div>
             <span className="text-xl font-bold tracking-tight text-[#1A1A1A] dark:text-white block leading-none">
-              AETHER<span className="font-light opacity-60 ml-1">GOLD</span>
+              TRUST<span className="font-light opacity-60 ml-1">LEND</span>
             </span>
             <span className="text-[9px] font-black tracking-[0.3em] text-[#D4AF37] uppercase leading-none mt-1 block">
               {t('sidebar.tagline')}

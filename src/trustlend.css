@@ -1,4 +1,4 @@
-/* Aether Custom Components and Utilities */
+/* TrustLend custom components and utilities */
 
 h1, h2, h3, h4 { 
   font-family: 'Cabinet Grotesk', sans-serif; 
@@ -8,7 +8,7 @@ h1, h2, h3, h4 {
 .gold-text { background: linear-gradient(135deg, #D4AF37 0%, #8A6E2F 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .luxury-shadow { box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.05); }
 
-/* Scrollbar styling for Aether Theme */
+/* Scrollbar styling for the TrustLend theme */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--cream); }
 ::-webkit-scrollbar-thumb { background: var(--silver); border-radius: 10px; }

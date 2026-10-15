@@ -1,6 +1,6 @@
 /**
  * ErrorMessage.jsx
- * Inline error display with retry button. Coral red styling, Aether-consistent.
+ * Inline error display with retry button. Coral red styling, TrustLend-consistent.
  */
 import React from 'react';
 
