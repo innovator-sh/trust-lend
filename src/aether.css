@@ -1,0 +1,26 @@
+/* Aether Custom Components and Utilities */
+
+h1, h2, h3, h4 { 
+  font-family: 'Cabinet Grotesk', sans-serif; 
+  letter-spacing: -0.02em; 
+}
+.gold-gradient { background: linear-gradient(135deg, #D4AF37 0%, #C9A961 100%); }
+.gold-text { background: linear-gradient(135deg, #D4AF37 0%, #8A6E2F 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.luxury-shadow { box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.05); }
+
+/* Scrollbar styling for Aether Theme */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--silver); border-radius: 10px; }
+
+/* Settings Inputs */
+.settings-input { 
+  border: 1px solid var(--silver); 
+  background: white; 
+  transition: all 0.2s ease; 
+}
+.settings-input:focus { 
+  border-color: var(--gold); 
+  outline: none; 
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.1); 
+}
