@@ -28,3 +28,9 @@ blockchain/.env
 blockchain/cache
 blockchain/.env.*
 !blockchain/.env.example
+
+# Python (ml-api)
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/

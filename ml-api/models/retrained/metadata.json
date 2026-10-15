@@ -1,0 +1,81 @@
+{
+  "set": "retrained",
+  "provenance": "Trained by training/train.py on SYNTHETIC data (training/synth_data.py).",
+  "data_source": "synthetic",
+  "real_world_validation": "none",
+  "seed": 42,
+  "trained_at": "2026-10-15T19:48:06Z",
+  "library_versions": {
+    "python": "3.12.4",
+    "scikit-learn": "1.6.1",
+    "numpy": "2.5.4"
+  },
+  "files": {
+    "trust": {
+      "file": "trust_score_model.joblib",
+      "sha256": "9d6e6bdff1965d7013113e931becdc34b01523e82b84da77c7fe2f2a8d8f143d",
+      "features": [
+        "repayment_history",
+        "repayment_speed",
+        "voucher_quality",
+        "loan_to_repayment_ratio",
+        "vouch_network_balance",
+        "transaction_frequency"
+      ],
+      "metrics": {
+        "auc_vs_label": 0.782,
+        "brier_vs_label": 0.1904,
+        "mean_abs_error_vs_true_probability": 0.0417,
+        "feature_importances": {
+          "repayment_history": 0.3668,
+          "repayment_speed": 0.1894,
+          "voucher_quality": 0.1379,
+          "loan_to_repayment_ratio": 0.1261,
+          "transaction_frequency": 0.0938,
+          "vouch_network_balance": 0.086
+        },
+        "test_rows": 5000
+      }
+    },
+    "fraud": {
+      "file": "fraud_model.joblib",
+      "sha256": "60092c5aace9463ad894ff8242923968a454bd9fe0ffd74acae7e6835ae235fc",
+      "features": [
+        "vouch_requests_24h",
+        "avg_voucher_account_age_days",
+        "network_clustering_score"
+      ],
+      "metrics": {
+        "false_positive_rate_on_normal": 0.0202,
+        "detection_rate_on_synthetic_rings": 1.0,
+        "contamination": 0.02
+      }
+    },
+    "schedule": {
+      "file": "repayment_model.joblib",
+      "sha256": "f9c8746595b71731d5e29ba04293b48cdf498c88d22e1fadf43de5d080f27d93",
+      "features": [
+        "tx_per_month",
+        "avg_days_between_tx"
+      ],
+      "metrics": {
+        "adjusted_rand_index_vs_true_archetype": 0.9515,
+        "accuracy_vs_true_archetype": 0.9843,
+        "cluster_centres_tx_per_month_and_gap_days": {
+          "Daily Earner": [
+            28.28,
+            1.31
+          ],
+          "Weekly Earner": [
+            6.16,
+            7.2
+          ],
+          "Seasonal Earner": [
+            1.0,
+            55.33
+          ]
+        }
+      }
+    }
+  }
+}
