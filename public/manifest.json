@@ -1,0 +1,23 @@
+{
+  "name": "TrustLend",
+  "short_name": "TrustLend",
+  "description": "Decentralized credit powered by your digital reputation",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0A0F1E",
+  "background_color": "#0A0F1E",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
