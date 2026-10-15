@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -31,7 +32,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
  *  • 100 % on-chain metadata — JSON + SVG art encoded as base64 data URIs.
  *  • Tier ladder: Entry (30-39) → Bronze (40-59) → Silver (60-79) → Gold (80-100).
  */
-contract ReputationNFT is ERC721, Ownable {
+contract ReputationNFT is ERC721, Ownable2Step {
     using Strings for uint256;
     using Strings for uint8;
 
@@ -283,6 +284,57 @@ contract ReputationNFT is ERC721, Ownable {
         data.earningArchetype = archetype;
 
         emit ReputationUpdated(wallet, oldScore, newScore, newTier, newStreak);
+    }
+
+    /**
+     * @notice Sync the score and tier only. Loan counters and the streak do not change.
+     * @dev    Used when the LendingPool owner sets a score by hand. This is not a loan event.
+     * @param  wallet   The wallet to update.
+     * @param  newScore New trust score (0-100).
+     *
+     * Emits {ReputationUpdated}.
+     */
+    function syncScore(address wallet, uint8 newScore) external onlyLendingPool {
+        require(wallet != address(0), "ReputationNFT: zero address");
+        require(newScore <= 100,      "ReputationNFT: score exceeds 100");
+
+        uint256 tokenId = _walletToTokenId[wallet];
+        require(tokenId != 0,         "ReputationNFT: wallet has no NFT");
+
+        ReputationData storage data = _reputationData[tokenId];
+        uint8 oldScore = data.trustScore;
+
+        data.trustScore = newScore;
+        data.tier       = _tierFromScore(newScore);
+
+        emit ReputationUpdated(wallet, oldScore, newScore, data.tier, data.repaymentStreak);
+    }
+
+    /**
+     * @notice Record a defaulted loan. The streak resets and `loansRepaid` does not change.
+     * @param  wallet     The borrower's wallet.
+     * @param  newScore   Score after the default penalty (0-100).
+     * @param  loanAmount Principal of the defaulted loan (TRUST wei).
+     *
+     * Emits {ReputationUpdated}.
+     */
+    function recordDefault(address wallet, uint8 newScore, uint256 loanAmount) external onlyLendingPool {
+        require(wallet != address(0), "ReputationNFT: zero address");
+        require(newScore <= 100,      "ReputationNFT: score exceeds 100");
+
+        uint256 tokenId = _walletToTokenId[wallet];
+        require(tokenId != 0,         "ReputationNFT: wallet has no NFT");
+
+        ReputationData storage data = _reputationData[tokenId];
+        uint8 oldScore = data.trustScore;
+
+        data.trustScore       = newScore;
+        data.tier             = _tierFromScore(newScore);
+        data.totalBorrowed   += loanAmount;
+        data.repaymentStreak  = 0;
+        data.earningArchetype = "Daily";
+
+        emit ReputationUpdated(wallet, oldScore, newScore, data.tier, 0);
     }
 
     /* ══════════════════════════════════════════

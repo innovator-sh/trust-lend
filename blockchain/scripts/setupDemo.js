@@ -50,20 +50,14 @@ async function main() {
   await trustToken.connect(lender).approve(lendingPoolAddr, trustUnits(8000));
   await lendingPool.connect(lender).depositToPool(trustUnits(8000));
 
-  console.log("5. Call lendingPool.updateTrustScore(BORROWER, 68)...");
-  await lendingPool.connect(deployer).updateTrustScore(borrower.address, 68);
-
-  console.log("6. Mint ReputationNFT for BORROWER...");
-  // The updateTrustScore already synced the NFT if it existed, but we need to mint it first
-  // Actually, we'll mint it now.
+  console.log("5. Register BORROWER (starting score + ReputationNFT) and set score 68...");
   await lendingPool.connect(deployer).mintReputationNFT(borrower.address);
-  // Re-syncing score to 68 since mint default is 30
   await lendingPool.connect(deployer).updateTrustScore(borrower.address, 68);
 
   // 7. Log final state
   console.log("──────────────────────────────────────────────────");
   console.log("DEMO STATE READY");
-  console.log("- Pool Liquidity: 508,000 TRUST (500k seed + 8k lender)");
+  console.log("- Pool Liquidity: 508,000 TRUST (500k seed + 8k lender, both deposited through depositToPool)");
   console.log("- Borrower Address:", borrower.address);
   console.log("- Borrower Score: 68 (Silver Tier)");
   console.log("- Borrower Limit: $200");

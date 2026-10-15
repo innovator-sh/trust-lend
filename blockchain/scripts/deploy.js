@@ -29,22 +29,27 @@ async function main() {
   const vouchSystemAddr = await vouchSystem.getAddress();
   console.log("VouchSystem deployed to:", vouchSystemAddr);
 
-  // 4. Deploy LendingPool (linking TrustToken and ReputationNFT)
+  // 4. Deploy LendingPool (linking TrustToken, ReputationNFT and VouchSystem)
   const LendingPool = await hre.ethers.getContractFactory("LendingPool");
-  const lendingPool = await LendingPool.deploy(trustTokenAddr, reputationNFTAddr);
+  const lendingPool = await LendingPool.deploy(trustTokenAddr, reputationNFTAddr, vouchSystemAddr);
   await lendingPool.waitForDeployment();
   const lendingPoolAddr = await lendingPool.getAddress();
   console.log("LendingPool deployed to:", lendingPoolAddr);
 
-  // 5. Link ReputationNFT to LendingPool
-  console.log("Linking ReputationNFT to LendingPool...");
-  await reputationNFT.setLendingPool(lendingPoolAddr);
+  // 5. Link ReputationNFT and VouchSystem to LendingPool
+  console.log("Linking ReputationNFT and VouchSystem to LendingPool...");
+  await (await reputationNFT.setLendingPool(lendingPoolAddr)).wait();
+  await (await vouchSystem.setLendingPool(lendingPoolAddr)).wait();
 
-  // 6. Seed the pool with liquidity (500k TRUST)
+  // 6. Seed the pool with liquidity (500k TRUST).
+  //    Use depositToPool so the pool counts the tokens. A plain transfer is NOT counted.
   console.log("Seeding pool with 500,000 TRUST...");
-  await trustToken.transfer(lendingPoolAddr, hre.ethers.parseEther("500000"));
+  const seed = hre.ethers.parseEther("500000");
+  await (await trustToken.approve(lendingPoolAddr, seed)).wait();
+  await (await lendingPool.depositToPool(seed)).wait();
 
-  // 7. Write addresses to frontend src/contracts/addresses.js
+  // 7. Write addresses to frontend src/contracts/addresses.js and blockchain/deployed.json
+  const explorerUrl = hre.network.name === "amoy" ? "https://amoy.polygonscan.com" : "";
   const addressesPath = path.join(__dirname, "../../src/contracts/addresses.js");
   const addressesContent = `export const ADDRESSES = {
   TRUST_TOKEN: "${trustTokenAddr}",
@@ -52,15 +57,29 @@ async function main() {
   REPUTATION_NFT: "${reputationNFTAddr}",
   VOUCH_SYSTEM: "${vouchSystemAddr}",
   CHAIN_ID: ${hre.network.config.chainId || 31337},
-  EXPLORER: "${hre.network.name === 'amoy' ? 'https://amoy.polygonscan.com' : 'http://localhost:8545'}"
+  EXPLORER: "${explorerUrl}"
 };
 
-export const explorerTxUrl = (hash) => \`\${ADDRESSES.EXPLORER}/tx/\${hash}\`;
-export const explorerAddrUrl = (addr) => \`\${ADDRESSES.EXPLORER}/address/\${addr}\`;
+// A local chain has no block explorer. The helpers return "#" in that case.
+export const explorerTxUrl = (hash) => ADDRESSES.EXPLORER ? \`\${ADDRESSES.EXPLORER}/tx/\${hash}\` : "#";
+export const explorerAddrUrl = (addr) => ADDRESSES.EXPLORER ? \`\${ADDRESSES.EXPLORER}/address/\${addr}\` : "#";
 `;
 
   fs.writeFileSync(addressesPath, addressesContent);
   console.log("✓ Addresses written to frontend.");
+
+  const deployed = {
+    network: hre.network.name,
+    chainId: String(hre.network.config.chainId || 31337),
+    deployedAt: new Date().toISOString(),
+    deployer: deployer.address,
+    TrustToken: trustTokenAddr,
+    ReputationNFT: reputationNFTAddr,
+    VouchSystem: vouchSystemAddr,
+    LendingPool: lendingPoolAddr,
+  };
+  fs.writeFileSync(path.join(__dirname, "../deployed.json"), JSON.stringify(deployed, null, 2) + "\n");
+  console.log("✓ deployed.json written.");
 
   // 8. Auto-export ABIs to frontend src/contracts/
   const contractsDir = path.join(__dirname, "../../src/contracts");

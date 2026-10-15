@@ -17,6 +17,9 @@ const ALL_KEYS = [
   PRIVATE_KEY_VOUCHER
 ].filter(Boolean).map(k => k.startsWith("0x") ? k : `0x${k}`);
 
+// Without keys in .env, the local node uses its own funded accounts ("remote").
+const LOCAL_ACCOUNTS = ALL_KEYS.length ? ALL_KEYS : "remote";
+
 module.exports = {
   solidity: {
     version: "0.8.25",
@@ -31,7 +34,7 @@ module.exports = {
     localhost: {
       url: LOCAL_RPC_URL || "http://127.0.0.1:8545",
       chainId: 31337,
-      accounts: ALL_KEYS
+      accounts: LOCAL_ACCOUNTS
     },
     amoy: {
       url: AMOY_RPC_URL || "https://rpc-amoy.polygon.technology",

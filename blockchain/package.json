@@ -1,15 +1,14 @@
 {
   "name": "trustlend-blockchain",
   "version": "1.0.0",
-  "description": "TrustLend smart contracts — Hardhat workspace",
+  "description": "TrustLend smart contracts \u2014 Hardhat workspace",
   "scripts": {
-    "compile":        "hardhat compile",
-    "test":           "hardhat test",
-    "node":           "hardhat node",
-    "deploy:local":   "hardhat run scripts/deploy.js --network localhost",
-    "deploy:mumbai":  "hardhat run scripts/deploy.js --network mumbai",
-    "deploy:amoy":    "hardhat run scripts/deploy.js --network amoy",
-    "verify:mumbai":  "hardhat verify --network mumbai"
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "node": "hardhat node",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:amoy": "hardhat run scripts/deploy.js --network amoy",
+    "verify:amoy": "hardhat verify --network amoy"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
