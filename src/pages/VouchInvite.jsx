@@ -13,7 +13,7 @@ const shortAddr = (a = '') => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—';
 export default function VouchInvite() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { address } = useWallet();
+  const { walletAddress: address } = useWallet();
   const { vouchRequests, createVouchRequest, stakeForBorrower, isLoading } = useVouchSystem();
   const { trustScore } = useReputationNFT();
 

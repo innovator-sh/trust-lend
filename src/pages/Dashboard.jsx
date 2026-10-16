@@ -25,7 +25,7 @@ function StatCard({ label, value, sub, subColor = '#8C8C8C', accent = false, chi
       flex flex-col justify-center group transition-all hover:border-[#F5A623]/50`}>
       {children}
       {label && <p className="text-[11px] font-black text-[#8C8C8C] uppercase tracking-widest mb-3">{label}</p>}
-      {value !== undefined && <h3 className="text-4xl font-black tracking-tighter text-[#1A1A1A] dark:text-[#FAFAF8] font-cabinet">{value}</h3>}
+      {value !== undefined && <h3 className="text-2xl xl:text-3xl font-black tracking-tighter text-[#1A1A1A] dark:text-[#FAFAF8] font-cabinet break-words">{value}</h3>}
       {sub && <p className="text-[10px] font-bold mt-2 uppercase tracking-widest" style={{ color: subColor }}>{sub}</p>}
     </div>
   );
@@ -61,7 +61,7 @@ function LoanHealthBar({ loan }) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { address } = useWallet();
+  const { walletAddress: address } = useWallet();
 
   const { trustScore, isLoading: isRepLoading } = useReputationNFT();
   const { borrowLimit, userLoan, poolStats, isLoading: isPoolLoading } = useLendingPool();
@@ -127,7 +127,7 @@ export default function Dashboard() {
 
           {isPoolLoading ? <div className="space-y-4 pt-12"><Skeleton w="40%" h="10px" /><Skeleton w="70%" h="32px" /><Skeleton w="80%" h="10px" /></div> : (
               <StatCard label="Pool Balance"
-                value={`${Number(poolStats?.totalLiquidity || 0).toLocaleString()} TRUST`}
+                value={`${Number(poolStats?.totalLiquidity || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} TRUST`}
                 sub="Community Liquidity Pool"
                 subColor="#1D9E75" />
           )}
@@ -188,11 +188,11 @@ export default function Dashboard() {
                 <LoanHealthBar loan={userLoan} />
                 <div className="grid grid-cols-3 gap-4">
                   {[
-                    { l: t('dashboard.borrowed'),  v: `$${userLoan.amount}`,           c: '#FAFAF8' },
+                    { l: t('dashboard.borrowed'),  v: `$${userLoan.amount}`,           c: 'currentColor' },
                     { l: t('dashboard.repaid'),    v: `$${userLoan.repaidAmount}`,     c: '#1D9E75' },
                     { l: t('dashboard.loanPath'), v: getPathName(userLoan.path),      c: '#F5A623' },
                   ].map(({ l, v, c }, i) => (
-                    <div key={i} className="text-center p-4 bg-[#FAFAF8] dark:bg-[#0A0F1E] rounded-xl border border-[#E8E8E8] dark:border-[#1E2A3A]">
+                    <div key={i} className="text-center p-4 bg-[#FAFAF8] dark:bg-[#0A0F1E] rounded-xl border border-[#E8E8E8] dark:border-[#1E2A3A] text-[#1A1A1A] dark:text-[#FAFAF8]">
                       <p className="text-[9px] font-black uppercase tracking-widest text-[#8C8C8C] mb-2">{l}</p>
                       <p className="font-black font-cabinet text-[15px] capitalize truncate" style={{ color: c }}>{v}</p>
                     </div>
@@ -293,16 +293,19 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1E2A3A]">
-                {transactions.slice(0, 4).map((l, i) => (
-                  <tr key={i} className="hover:bg-white/[0.02] transition-all duration-300">
+                {transactions.length === 0 && (
+                  <tr><td colSpan={5} className="py-8 text-center text-xs text-[#8C8C8C]">No activity yet for this wallet.</td></tr>
+                )}
+                {transactions.slice(0, 4).map((l) => (
+                  <tr key={l.id} className="hover:bg-white/[0.02] transition-all duration-300">
                     <td className="py-5 text-sm font-bold text-[#1A1A1A] dark:text-[#FAFAF8]">
                       {l.type}
                     </td>
-                    <td className={`py-5 font-mono font-black text-sm ${l.positive ? 'text-[#1D9E75]' : 'text-[#EF4444]'}`}>
+                    <td className={`py-5 font-mono font-black text-sm ${l.positive ? 'text-[#1D9E75]' : 'text-[#1A1A1A] dark:text-[#FAFAF8]'}`}>
                       {l.value}
                     </td>
                     <td className="py-5 text-[11px] font-black text-[#8C8C8C] uppercase tracking-widest">
-                      {new Date(l.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {l.date ? l.date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                     </td>
                     <td className="py-5">
                       <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-[#1D9E75]/10 text-[#1D9E75]`}>
@@ -310,7 +313,7 @@ export default function Dashboard() {
                       </span>
                     </td>
                     <td className="py-5">
-                      {l.hash && <span className="font-mono text-[10px] text-[#8C8C8C]">{l.hash}</span>}
+                      {l.hash && <span className="font-mono text-[10px] text-[#8C8C8C]">{l.hash.slice(0, 10)}…</span>}
                     </td>
                   </tr>
                 ))}

@@ -40,6 +40,9 @@ Decentralized micro-lending dApp on Polygon: React/Vite frontend plus a Hardhat 
 - Keep ML feature scales as documented in `ml-api/app/features.py`. The original models need `voucher_quality` 0-100, `vouch_network_balance` 0-2, and so on.
 - Do not add fixed statistics or claims such as "AI", "guaranteed" or "default rate" to the UI. Show numbers from the contract, or label the text as sample data.
 - Local chain id is 31337 and Amoy is 80002; `NetworkGuard` blocks other networks.
+- `useWallet()` returns `walletAddress`, not `address`. `ConnectWallet` must call `connectWallet()` after the signature, or the pages see no provider until a reload. A hook that reads the chain must check the loan status, not only the amount.
+- Activity lists (Transactions, lender activity) read contract events through `src/lib/chainEvents.js` in chunks from `ADDRESSES.DEPLOY_BLOCK`. Do not add mock lists.
+- Browser check: `blockchain` node + `npm run deploy:local` + `npm run dev`. A scripted run uses a fake `window.ethereum` that forwards to the local node (hardhat accounts are unlocked). The app writes to the real Supabase project, so use test wallets only.
 
 ## Guardrails
 - Never commit or push keys, API keys, private keys, seed phrases, tokens or `.env` files. Use placeholders (`your_private_key_here`) in every committed file, including `.env.example`, docs, tests and scripts.

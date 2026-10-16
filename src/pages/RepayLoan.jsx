@@ -7,10 +7,13 @@ import { useReputationNFT } from '../hooks/useReputationNFT';
 import { useTrustToken } from '../hooks/useTrustToken';
 import Skeleton from '../components/Skeleton';
 import toast from 'react-hot-toast';
+import { ethers } from 'ethers';
+import { ADDRESSES } from '../contracts/addresses';
+import ReputationNFTABI from '../contracts/ReputationNFT.json';
 
 export default function RepayLoan() {
   const navigate = useNavigate();
-  const { address } = useWallet();
+  const { walletAddress: address, provider } = useWallet();
 
   const { userLoan, makeRepayment, isLoading: isLoanLoading } = useLendingPool();
   const { trustScore, isLoading: isRepLoading } = useReputationNFT();
@@ -19,6 +22,7 @@ export default function RepayLoan() {
   const [phase, setPhase] = useState('idle'); // idle|approving|blockchain|done|error
   const [errorMsg, setErrorMsg] = useState('');
   const [needsApproval, setNeedsApproval] = useState(false);
+  const [scoreChange, setScoreChange] = useState(null); // { before, after } read from the chain
 
   useEffect(() => {
     async function check() {
@@ -55,7 +59,17 @@ export default function RepayLoan() {
     setPhase('blockchain');
     setErrorMsg('');
     try {
+        const before = Number(trustScore);
         await makeRepayment(userLoan.totalOwed);
+        // Read the real score after the repayment. The bonus depends on timing, and can be 0.
+        let after = before;
+        try {
+          const nft = new ethers.Contract(ADDRESSES.REPUTATION_NFT, ReputationNFTABI.abi, provider);
+          after = Number((await nft.getReputation(address)).trustScore);
+        } catch (e) {
+          console.warn('[RepayLoan] could not read the new score:', e?.message || e);
+        }
+        setScoreChange({ before, after });
         setPhase('done');
     } catch (err) {
         console.error(err);
@@ -85,7 +99,7 @@ export default function RepayLoan() {
             <p className="text-[10px] font-black uppercase tracking-widest text-[#1D9E75] mb-2">Loan Settled</p>
             <h1 className="font-cabinet font-black text-4xl text-[#FAFAF8] tracking-tight">Well Done! 🔥</h1>
             <p className="text-[#8C8C8C] text-sm mt-2 leading-relaxed">
-              Your repayment is recorded on-chain and your Reputation Protocol score was augmented automatically.
+              Your repayment is recorded on-chain.{scoreChange && scoreChange.after === scoreChange.before ? ' No score bonus this time: a repayment in the first day earns none. Repay later in the term to earn one.' : ' Your trust score was updated by the contract.'}
             </p>
           </div>
 
@@ -93,16 +107,16 @@ export default function RepayLoan() {
             <p className="text-[10px] font-black uppercase tracking-widest text-[#8C8C8C] mb-5">Trust Score Evolution</p>
             <div className="flex items-center justify-center gap-6">
               <div className="text-center">
-                <p className="text-4xl font-black font-cabinet text-[#FAFAF8]">{Number(trustScore)}</p>
+                <p className="text-4xl font-black font-cabinet text-[#FAFAF8]">{scoreChange ? scoreChange.before : Number(trustScore)}</p>
                 <p className="text-[9px] font-black uppercase tracking-widest text-[#8C8C8C] mt-1">Previous</p>
               </div>
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 }}
                 className="flex flex-col items-center gap-1">
-                <div className="text-[#1D9E75] text-xl font-black">+{8}</div>
+                <div className="text-[#1D9E75] text-xl font-black">{scoreChange && scoreChange.after > scoreChange.before ? `+${scoreChange.after - scoreChange.before}` : '+0'}</div>
                 <div className="text-[#1D9E75] text-sm">→</div>
               </motion.div>
               <div className="text-center">
-                <p className="text-4xl font-black font-cabinet text-[#1D9E75]">{Number(trustScore) + 8}</p>
+                <p className="text-4xl font-black font-cabinet text-[#1D9E75]">{scoreChange ? scoreChange.after : Number(trustScore)}</p>
                 <p className="text-[9px] font-black uppercase tracking-widest text-[#1D9E75] mt-1">Current</p>
               </div>
             </div>

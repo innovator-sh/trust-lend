@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLendingPool } from '../hooks/useLendingPool';
+import { useVouchSystem } from '../hooks/useVouchSystem';
 import { createLoan, updateLoan, getUser, getTier, TIER_LIMITS, TIER_COLORS, nextTierInfo, NO_KYC_LIMIT } from '../lib/supabase';
 import {
   isBlockchainReady,
@@ -8,14 +10,12 @@ import {
   parseBlockchainError,
 } from '../lib/blockchain';
 
-/* ── demo-mode mock (only used when blockchain not ready) ── */
-async function mockBlockchainCreateLoan(amount) {
-  await new Promise(r => setTimeout(r, 2200));
-  const hash = '0x' + Array.from({ length: 64 }, () =>
-    '0123456789abcdef'[Math.floor(Math.random() * 16)]
-  ).join('');
-  return { tx_hash: hash };
-}
+/* Loan terms. These match the LendingPool contract: flat interest, 30 days. */
+const MIN_VOUCH_STAKE = 5; // TRUST of active vouch stake needed for the vouched path
+const PATHS = {
+  trust:   { chainPath: 2, ratePct: 7.1, label: 'Trust-Only' },
+  vouched: { chainPath: 0, ratePct: 4.2, label: 'Vouched' },
+};
 
 /* ── step dot ── */
 function StepDot({ n, active, done }) {
@@ -31,8 +31,12 @@ function StepDot({ n, active, done }) {
 }
 
 /* ════════════ STEP 1 — Select Path ════════════ */
-function StepSelectPath({ onNext, limit, tier, tierColor }) {
+function StepSelectPath({ onNext, limit, tier, tierColor, stake }) {
   const [selected, setSelected] = useState('trust');
+  const [amount, setAmount] = useState(String(limit));
+  const vouchedOk = stake >= MIN_VOUCH_STAKE;
+  const amountNum = Number(amount);
+  const amountOk = Number.isFinite(amountNum) && amountNum >= 1 && amountNum <= limit;
 
   const paths = [
     {
@@ -43,19 +47,19 @@ function StepSelectPath({ onNext, limit, tier, tierColor }) {
       badgeColor: tierColor,
       desc: 'Borrow based on your Trust Score. No collateral, no vouchers needed.',
       limit: `$${limit}.00`,
-      apr: '0% (Demo)',
+      apr: `${PATHS.trust.ratePct}% flat`,
       available: true,
     },
     {
       id: 'vouched',
       icon: '👥',
       label: 'Vouched',
-      badge: 'Coming Soon',
-      badgeColor: '#8C8C8C',
-      desc: 'Get peers to vouch for you and unlock bigger loans. Need at least 1 active voucher.',
-      limit: 'Up to $200',
-      apr: '8% APR',
-      available: false,
+      badge: vouchedOk ? 'Unlocked' : 'Needs vouches',
+      badgeColor: vouchedOk ? '#1D9E75' : '#8C8C8C',
+      desc: `A lower rate when friends stake at least ${MIN_VOUCH_STAKE} TRUST for you. Your active vouch stake: ${stake.toLocaleString()} TRUST.`,
+      limit: `$${limit}.00`,
+      apr: `${PATHS.vouched.ratePct}% flat`,
+      available: vouchedOk,
     },
     {
       id: 'group',
@@ -64,8 +68,8 @@ function StepSelectPath({ onNext, limit, tier, tierColor }) {
       badge: 'Coming Soon',
       badgeColor: '#8C8C8C',
       desc: 'Join a lending group where members share responsibility. Requires pool membership.',
-      limit: 'Up to $500',
-      apr: '5% APR',
+      limit: '—',
+      apr: '—',
       available: false,
     },
   ];
@@ -76,7 +80,7 @@ function StepSelectPath({ onNext, limit, tier, tierColor }) {
         <p className="text-[10px] font-black uppercase tracking-widest text-[#F5A623] mb-2">Step 1 of 3</p>
         <h2 className="font-cabinet font-black text-3xl text-[#FAFAF8] tracking-tight">How Do You Want to Borrow?</h2>
         <p className="text-[#8C8C8C] text-sm mt-2 leading-relaxed">
-          Choose your loan type. Trust-only is available right away — no collateral needed.
+          Choose your loan type. Trust-only is available right away — no collateral needed. Interest is flat and does not depend on the term.
         </p>
       </div>
 
@@ -120,22 +124,35 @@ function StepSelectPath({ onNext, limit, tier, tierColor }) {
         ))}
       </div>
 
+      <div>
+        <label htmlFor="loan-amount" className="text-[10px] font-black uppercase tracking-widest text-[#8C8C8C]">
+          Amount (max ${limit})
+        </label>
+        <input id="loan-amount" type="number" min="1" max={limit} step="1" inputMode="numeric" value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="mt-2 w-full bg-[#0A0F1E] border border-[#1E2A3A] rounded-xl px-4 py-3.5 text-[#FAFAF8] font-bold text-sm focus:outline-none focus:border-[#F5A623]/50" />
+        {!amountOk && <p className="mt-2 text-[11px] text-[#EF4444]">Enter an amount from 1 to {limit}.</p>}
+      </div>
+
       <button
         id="btn-continue-path"
-        onClick={() => onNext(selected)}
+        disabled={!amountOk}
+        onClick={() => onNext(selected, Math.floor(amountNum))}
         className="w-full py-5 rounded-2xl bg-gradient-to-r from-[#F5A623] to-[#D4AF37]
                    text-black font-black text-[13px] uppercase tracking-widest
-                   hover:opacity-90 active:scale-[0.98] transition-all
+                   hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed
                    shadow-[0_0_30px_rgba(245,166,35,0.2)]"
       >
-        Continue → Trust-Only Loan
+        Continue → {PATHS[selected].label} Loan
       </button>
     </div>
   );
 }
 
 /* ════════════ STEP 2 — Confirm ════════════ */
-function StepConfirm({ wallet, amount, onSuccess }) {
+function StepConfirm({ wallet, amount, path, onSuccess }) {
+  const terms = PATHS[path] || PATHS.trust;
+  const repayTotal = (amount * (1 + terms.ratePct / 100)).toFixed(2);
   const [phase, setPhase] = useState('idle'); // idle|pending|blockchain|done|error
   const [error, setError] = useState('');
 
@@ -144,23 +161,14 @@ function StepConfirm({ wallet, amount, onSuccess }) {
       setPhase('pending');
 
       // 1. Create loan in Supabase → status: pending
-      const loan = await createLoan({ walletAddress: wallet, amount, path: 'trust' });
+      const loan = await createLoan({ walletAddress: wallet, amount, path });
 
-      // 2. Blockchain: real if MetaMask on correct network, else mock
+      // 2. Blockchain. A loan needs a wallet on the network where the contracts are deployed.
       setPhase('blockchain');
-      const ready = await isBlockchainReady();
-      let tx_hash;
-
-      if (ready) {
-        // Real blockchain path — one MetaMask popup
-        const { txHash: createHash } = await blockchainRequestLoan(amount, 30, 2);
-        tx_hash = createHash;
-      } else {
-        // Demo fallback — simulated hash, no MetaMask required
-        const result = await mockBlockchainCreateLoan(amount);
-        // Mark simulated hashes so they cannot be mistaken for real transactions.
-        tx_hash = `demo:${result.tx_hash}`;
+      if (!(await isBlockchainReady())) {
+        throw new Error('Connect your wallet on the network where TrustLend is deployed, then try again.');
       }
+      const { txHash: tx_hash } = await blockchainRequestLoan(amount, 30, terms.chainPath);
 
       // 3. Update Supabase → status: active + tx_hash
       const activeLoan = await updateLoan(loan.id, {
@@ -184,8 +192,8 @@ function StepConfirm({ wallet, amount, onSuccess }) {
         <p className="text-[10px] font-black uppercase tracking-widest text-[#F5A623] mb-2">Step 2 of 3</p>
         <h2 className="font-cabinet font-black text-3xl text-[#FAFAF8] tracking-tight">Review Your Loan</h2>
         <p className="text-[#8C8C8C] text-sm mt-2 leading-relaxed">
-          Check the details before confirming. This will create your loan on-chain via{' '}
-          <span className="font-mono text-[#F5A623]">createLoan()</span>.
+          Check the details before confirming. This creates your loan on-chain with{' '}
+          <span className="font-mono text-[#F5A623]">requestLoan()</span>.
         </p>
       </div>
 
@@ -193,11 +201,11 @@ function StepConfirm({ wallet, amount, onSuccess }) {
       <div className="bg-[#0A0F1E] border border-[#1E2A3A] rounded-2xl p-6 space-y-0">
         {[
           { l: 'Loan Amount',  v: `$${amount}.00`,      c: '#F5A623' },
-          { l: 'Loan Path',    v: 'Trust-Only',          c: '#FAFAF8' },
+          { l: 'Loan Path',    v: terms.label,           c: '#FAFAF8' },
           { l: 'Term',         v: '30 days',             c: '#FAFAF8' },
-          { l: 'APR',          v: '0% (Demo)',           c: '#1D9E75' },
+          { l: 'Interest',     v: `${terms.ratePct}% flat`, c: '#FAFAF8' },
           { l: 'Collateral',   v: 'None',                c: '#1D9E75' },
-          { l: 'Repayment',    v: `$${amount}.00 flat`, c: '#FAFAF8' },
+          { l: 'Total to repay', v: `$${repayTotal}`,    c: '#FAFAF8' },
         ].map(({ l, v, c }, i) => (
           <div key={i} className="flex justify-between py-3.5 border-b border-[#1E2A3A] last:border-0">
             <span className="text-[11px] font-black uppercase tracking-widest text-[#8C8C8C]">{l}</span>
@@ -246,7 +254,7 @@ function StepConfirm({ wallet, amount, onSuccess }) {
           <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="w-full py-5 rounded-2xl border border-[#1E2A3A] text-center
                        text-[11px] font-black uppercase tracking-widest text-[#8C8C8C]">
-            {phase === 'pending' ? 'Writing to Supabase…' : 'Awaiting blockchain confirmation…'}
+            {phase === 'pending' ? 'Saving your request…' : 'Awaiting blockchain confirmation…'}
           </motion.div>
         )}
 
@@ -308,7 +316,7 @@ function StepSuccess({ loan, txHash, navigate }) {
           { l: 'Status',    v: 'ACTIVE',                               c: '#1D9E75' },
           { l: 'Amount',    v: `$${loan?.amount ?? '—'}`,    c: '#FAFAF8' },
           { l: 'Due In',    v: '30 days',                              c: '#F59E0B' },
-          { l: 'Loan ID',   v: loan?.id?.slice(0, 8) + '…' ?? '—',    c: '#8C8C8C' },
+          { l: 'Loan ID',   v: loan?.id ? loan.id.slice(0, 8) + '…' : '—',    c: '#8C8C8C' },
         ].map(({ l, v, c }, i) => (
           <div key={i} className="flex justify-between py-3 border-b border-[#1E2A3A] last:border-0">
             <span className="text-[10px] font-black uppercase tracking-widest text-[#8C8C8C]">{l}</span>
@@ -345,6 +353,9 @@ export default function LoanFlow() {
   const wallet   = sessionStorage.getItem('tl_wallet') || '';
   const [step, setStep]     = useState(0);
   const [path, setPath]     = useState('trust');
+  const [amount, setAmount] = useState(0);
+  const { borrowLimit } = useLendingPool();
+  const { activeStake } = useVouchSystem();
   const [loan, setLoan]     = useState(null);
   const [txHash, setTxHash] = useState('');
   const [user, setUser]     = useState(null);
@@ -360,8 +371,11 @@ export default function LoanFlow() {
   const tierLimit = TIER_LIMITS[tier];
   // Loans above the entry amount need verified KYC. An admin sets kyc_status = 'verified'.
   const kycVerified = user?.kyc_status === 'verified';
-  const limit  = kycVerified ? tierLimit : Math.min(tierLimit, NO_KYC_LIMIT);
-  const cappedByKyc = tierLimit > limit;
+  const kycLimit = kycVerified ? tierLimit : Math.min(tierLimit, NO_KYC_LIMIT);
+  // The contract has the final say. Never offer more than it will lend.
+  const chainLimit = Math.floor(Number(borrowLimit) || 0);
+  const limit  = chainLimit > 0 ? Math.min(kycLimit, chainLimit) : kycLimit;
+  const cappedByKyc = tierLimit > kycLimit;
   const tierColor = TIER_COLORS[tier];
   const next   = nextTierInfo(score);
   const STEP_LABELS = ['Select Path', 'Confirm', 'Success'];
@@ -435,7 +449,7 @@ export default function LoanFlow() {
       {cappedByKyc && (
         <div className="w-full max-w-md z-10 mb-4 rounded-2xl border border-[#F5A623]/30 bg-[#F5A623]/5 px-5 py-4 text-xs leading-relaxed text-[#F5A623]">
           Your score allows up to ${tierLimit}. Loans above ${NO_KYC_LIMIT} need verified KYC
-          (status now: {user?.kyc_status || 'pending'}). You can borrow up to ${limit} today.
+          (status now: {user?.kyc_status || 'pending'}). You can borrow up to ${kycLimit} today.
         </div>
       )}
 
@@ -445,15 +459,16 @@ export default function LoanFlow() {
           <AnimatePresence mode="wait">
             {step === 0 && (
               <motion.div key="s0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <StepSelectPath onNext={(p) => { setPath(p); setStep(1); }}
-                  limit={limit} tier={tier} tierColor={tierColor} />
+                <StepSelectPath onNext={(p, a) => { setPath(p); setAmount(a); setStep(1); }}
+                  limit={limit} tier={tier} tierColor={tierColor} stake={Number(activeStake) || 0} />
               </motion.div>
             )}
             {step === 1 && (
               <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <StepConfirm
                   wallet={wallet}
-                  amount={limit}
+                  amount={amount}
+                  path={path}
                   onSuccess={(activeLoan, hash) => {
                     setLoan(activeLoan);
                     setTxHash(hash);

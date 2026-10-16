@@ -31,18 +31,18 @@ export default function TopHeader({ pageTitle, pageSubtitle, toggleMobile }) {
   const showClaimBtn = isConnected && parseFloat(trustBalance) < 100;
 
   return (
-    <header className={`sticky top-0 z-30 transition-all duration-500 h-24 md:h-28 flex items-center justify-between px-8 md:px-16 border-b 
+    <header className={`sticky top-0 z-30 transition-all duration-500 h-20 md:h-28 flex items-center justify-between px-4 sm:px-8 md:px-16 border-b 
       ${isDarkMode ? 'bg-[#1A1A1A]/60 backdrop-blur-xl border-[#333]' : 'bg-white/60 backdrop-blur-xl border-[#F5F3F0]'}`}>
       
-      <div className="flex items-center gap-6">
-        <button onClick={toggleMobile} className="lg:hidden w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-[#E8E8E8] text-[#1A1A1A] shadow-lg active:scale-90 transition-transform dark:bg-[#D4AF37] dark:text-black">
+      <div className="flex items-center gap-3 md:gap-6">
+        <button onClick={toggleMobile} className="lg:hidden w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-2xl bg-white border border-[#E8E8E8] text-[#1A1A1A] shadow-lg active:scale-90 transition-transform dark:bg-[#D4AF37] dark:text-black">
           <iconify-icon icon="lucide:menu" className="text-xl"></iconify-icon>
         </button>
         <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-          <h1 className={`text-xl md:text-3xl font-black font-cabinet tracking-tighter leading-none ${isDarkMode ? 'text-white' : 'text-[#1A1A1A]'}`}>
+          <h1 className={`text-base sm:text-xl md:text-3xl font-black font-cabinet tracking-tighter leading-none whitespace-nowrap ${isDarkMode ? 'text-white' : 'text-[#1A1A1A]'}`}>
             {title}
           </h1>
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden 2xl:flex items-center gap-3">
             <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse"></span>
             <span className="text-[10px] md:text-xs text-[#8C8C8C] font-black uppercase tracking-[0.3em] leading-none whitespace-nowrap">
               {subtitle}
@@ -51,7 +51,7 @@ export default function TopHeader({ pageTitle, pageSubtitle, toggleMobile }) {
         </div>
       </div>
       
-      <div className="flex items-center gap-3 md:gap-5">
+      <div className="flex items-center gap-2 md:gap-5">
         <LanguageSwitcher />
         <ThemeToggle />
 
@@ -68,7 +68,7 @@ export default function TopHeader({ pageTitle, pageSubtitle, toggleMobile }) {
 
         {isConnected ? (
           <div className="relative" ref={menuRef}>
-            <button onClick={() => setMenuOpen(v => !v)} className={`flex items-center gap-2.5 px-3 py-2 md:px-4 md:py-2.5 rounded-2xl border transition-all duration-300 ${isDarkMode ? 'bg-[#111827] border-[#1E2A3A] hover:border-[#F5A623]/40' : 'bg-white border-[#E8E8E8] hover:border-[#D4AF37]/60'} active:scale-95`}>
+            <button onClick={() => setMenuOpen(v => !v)} className={`flex items-center gap-2.5 whitespace-nowrap px-3 py-2 md:px-4 md:py-2.5 rounded-2xl border transition-all duration-300 ${isDarkMode ? 'bg-[#111827] border-[#1E2A3A] hover:border-[#F5A623]/40' : 'bg-white border-[#E8E8E8] hover:border-[#D4AF37]/60'} active:scale-95`}>
               
               {/* Network Badge */}
               {chainId === 31337 && (
@@ -92,7 +92,7 @@ export default function TopHeader({ pageTitle, pageSubtitle, toggleMobile }) {
                 <span className="w-px h-3 bg-[#1E2A3A]" />
                 <span className="text-[#8C8C8C]">{maticBalance} <span className="text-[#1D9E75]">MATIC</span></span>
               </div>
-              <span className="font-mono text-[11px] font-bold text-[#FAFAF8]">{shortAddr}</span>
+              <span className={`font-mono text-[11px] font-bold ${isDarkMode ? 'text-[#FAFAF8]' : 'text-[#1A1A1A]'}`}>{shortAddr}</span>
               <iconify-icon icon="lucide:chevron-down" className={`text-xs text-[#8C8C8C] transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}></iconify-icon>
             </button>
 

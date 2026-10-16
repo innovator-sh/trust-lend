@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 export default function Borrow() {
   const { t } = useTranslation();
   const { isDarkMode } = useTheme();
-  const { address } = useWallet();
+  const { walletAddress: address } = useWallet();
   const navigate = useNavigate();
 
   const { borrowLimit, requestLoan, isLoading } = useLendingPool();

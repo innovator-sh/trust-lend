@@ -1,21 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ethers } from 'ethers';
 import { getUser, updateUser } from '../lib/supabase';
+import { useWallet } from '../context/WalletContext';
+import { ADDRESSES } from '../contracts/addresses';
+import TrustTokenABI from '../contracts/TrustToken.json';
+import ReputationNFTABI from '../contracts/ReputationNFT.json';
 
 /* ───────────────────────── helpers ───────────────────────── */
 const shortAddr = (a = '') => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—');
-const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
 
-function mockWalletScan(address) {
+/** Read-only scan of the connected wallet. Every value comes from the chain. */
+async function scanWallet(provider, address) {
+  const [network, txCount, native] = await Promise.all([
+    provider.getNetwork(),
+    provider.getTransactionCount(address),
+    provider.getBalance(address),
+  ]);
+  let trust = null;
+  let hasNft = null;
+  try {
+    const token = new ethers.Contract(ADDRESSES.TRUST_TOKEN, TrustTokenABI.abi, provider);
+    trust = ethers.formatUnits(await token.balanceOf(address), 18);
+    const nft = new ethers.Contract(ADDRESSES.REPUTATION_NFT, ReputationNFTABI.abi, provider);
+    hasNft = await nft.hasNFT(address);
+  } catch (e) {
+    console.warn('[scan] TrustLend contracts not readable on this network:', e?.message || e);
+  }
   return {
     scanned_at: new Date().toISOString(),
-    tx_count: rand(3, 48),
-    wallet_age_days: rand(30, 800),
-    defi_interactions: rand(0, 14),
-    nft_holdings: rand(0, 6),
-    risk_flag: 'CLEAN',
-    chain: 'ethereum',
+    chain_id: Number(network.chainId),
+    tx_count: txCount,
+    native_balance: ethers.formatEther(native),
+    trust_balance: trust,
+    has_reputation_nft: hasNft,
   };
 }
 
@@ -64,16 +83,22 @@ const STEP_LABELS = ['Scan', 'Trust Score', 'Profile', 'First Action'];
 
 /* ═══════════════════════ STEP 1 – Wallet Scan ═══════════════════════ */
 function StepScan({ wallet, onNext, setSnapshot }) {
-  const [status, setStatus] = useState('idle');
+  const { provider } = useWallet();
+  const [status, setStatus] = useState('idle'); // idle | scanning | done | error
   const [snap, setSnap]     = useState(null);
 
   const runScan = async () => {
     setStatus('scanning');
-    await new Promise(r => setTimeout(r, 2400));
-    const data = mockWalletScan(wallet);
-    setSnap(data);
-    setSnapshot(data);
-    setStatus('done');
+    try {
+      if (!provider) throw new Error('No wallet provider');
+      const data = await scanWallet(provider, wallet);
+      setSnap(data);
+      setSnapshot(data);
+      setStatus('done');
+    } catch (err) {
+      console.warn('[scan]', err?.message || err);
+      setStatus('error');
+    }
   };
 
   return (
@@ -82,8 +107,8 @@ function StepScan({ wallet, onNext, setSnapshot }) {
         <p className="text-[10px] font-black uppercase tracking-widest text-[#F5A623] mb-2">Step 1 of 4</p>
         <h2 className="font-cabinet font-black text-3xl text-[#FAFAF8] tracking-tight">Wallet Intelligence Scan</h2>
         <p className="text-[#8C8C8C] text-sm mt-2 leading-relaxed">
-          We read your on-chain history to build an initial risk portrait.
-          Read-only — no gas, no transactions.
+          We read what is public about this wallet on the connected network.
+          Read-only — no gas, no transactions. Everyone starts at the same score.
         </p>
       </div>
 
@@ -117,7 +142,7 @@ function StepScan({ wallet, onNext, setSnapshot }) {
         {status === 'scanning' && (
           <motion.div key="scanning" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="space-y-4 py-2">
-            {['Reading transaction history…', 'Detecting DeFi interactions…', 'Running risk analysis…'].map((msg, i) => (
+            {['Reading transaction count…', 'Reading balances…', 'Checking for a TrustLend reputation NFT…'].map((msg, i) => (
               <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.65 }}
                 className="flex items-center gap-3 text-[12px] text-[#8C8C8C] font-bold">
@@ -135,12 +160,11 @@ function StepScan({ wallet, onNext, setSnapshot }) {
             className="bg-[#0A0F1E] rounded-2xl border border-[#1E2A3A] p-6 space-y-0">
             <p className="text-[10px] font-black uppercase tracking-widest text-[#8C8C8C] mb-4">Scan Results</p>
             {[
-              { l: 'Transactions',       v: snap.tx_count,              c: '#FAFAF8' },
-              { l: 'Wallet Age',         v: `${snap.wallet_age_days}d`, c: '#FAFAF8' },
-              { l: 'DeFi Interactions',  v: snap.defi_interactions,     c: '#FAFAF8' },
-              { l: 'NFT Holdings',       v: snap.nft_holdings,          c: '#FAFAF8' },
-              { l: 'Risk Assessment',    v: snap.risk_flag,             c: '#1D9E75' },
-              { l: 'Network',            v: 'Ethereum',                 c: '#FAFAF8' },
+              { l: 'Transactions sent',  v: snap.tx_count,                                    c: '#FAFAF8' },
+              { l: 'Native balance',     v: Number(snap.native_balance).toFixed(4),           c: '#FAFAF8' },
+              { l: 'TRUST balance',      v: snap.trust_balance === null ? 'n/a' : Number(snap.trust_balance).toLocaleString(), c: '#FAFAF8' },
+              { l: 'Reputation NFT',     v: snap.has_reputation_nft === null ? 'n/a' : snap.has_reputation_nft ? 'Yes' : 'Not yet', c: snap.has_reputation_nft ? '#1D9E75' : '#FAFAF8' },
+              { l: 'Chain ID',           v: snap.chain_id,                                    c: '#FAFAF8' },
             ].map(({ l, v, c }, i) => (
               <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.08 }}
                 className="flex justify-between py-3 border-b border-[#1E2A3A] last:border-0">
@@ -151,6 +175,18 @@ function StepScan({ wallet, onNext, setSnapshot }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {status === 'error' && (
+        <div className="space-y-4">
+          <p className="text-[12px] font-bold text-[#EF4444]">
+            The scan could not read the network. Check that your wallet is connected, then try again.
+          </p>
+          <button type="button" onClick={runScan}
+            className="w-full py-4 rounded-2xl border border-[#F5A623] text-[#F5A623] font-black text-[12px] uppercase tracking-widest">
+            Try Again
+          </button>
+        </div>
+      )}
 
       {status === 'done' && (
         <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={onNext}
@@ -226,11 +262,11 @@ function StepTrustScore({ wallet, snapshot, onNext }) {
             <div className="w-full bg-[#0A0F1E] rounded-2xl border border-[#1E2A3A] p-5 space-y-3">
               <p className="text-[10px] font-black text-[#8C8C8C] uppercase tracking-widest mb-3">How to grow your score</p>
               {[
-                ['Get vouched by peers', '+10 pts', '#1D9E75'],
-                ['Repay on time', '+5 pts', '#1D9E75'],
-                ['Maintain repayment streak', '+3 pts', '#F5A623'],
-                ['Join a group pool', '+8 pts', '#F5A623'],
-                ['Complete KYC', '+5 pts', '#F5A623'],
+                ['Repay early (after day 1, before 75% of the term)', '+12 pts', '#1D9E75'],
+                ['Repay before the due date', '+8 pts', '#1D9E75'],
+                ['Repay late', '+3 pts', '#F5A623'],
+                ['Default on a loan', '−15 pts', '#EF4444'],
+                ['Get vouched or verify KYC', 'Lower rate, higher limit', '#F5A623'],
               ].map(([l, p, c], i) => (
                 <div key={i} className="flex justify-between items-center">
                   <span className="text-sm text-[#FAFAF8] font-bold">{l}</span>
@@ -324,7 +360,7 @@ function StepProfile({ wallet, user, onNext, setRole: setParentRole }) {
         <p className="text-[10px] font-black uppercase tracking-widest text-[#F5A623] mb-2">Step 3 of 4</p>
         <h2 className="font-cabinet font-black text-3xl text-[#FAFAF8] tracking-tight">Your Profile</h2>
         <p className="text-[#8C8C8C] text-sm mt-2 leading-relaxed">
-          Build your decentralised identity. KYC fields are encrypted and stored securely.
+          Build your on-chain identity. This is a testnet prototype: details are saved as plain text in the app database. Do not enter real ID numbers.
         </p>
       </div>
 
@@ -383,7 +419,7 @@ function StepProfile({ wallet, user, onNext, setRole: setParentRole }) {
       {/* KYC */}
       <div className="space-y-3 pt-2 border-t border-[#1E2A3A]">
         <p className="text-[10px] font-black uppercase tracking-widest text-[#8C8C8C] pt-1">
-          KYC Documents <span className="text-[#F5A623]">(optional — unlocks higher limits)</span>
+          KYC Documents <span className="text-[#F5A623]">(optional — an admin must verify them before limits above $10 unlock)</span>
         </p>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Aadhaar Number">
@@ -394,7 +430,7 @@ function StepProfile({ wallet, user, onNext, setRole: setParentRole }) {
           </Field>
         </div>
         {(form.kyc_aadhar || form.kyc_pan) && (
-          <p className="text-[10px] text-[#1D9E75] font-black">✓ KYC will be submitted for verification</p>
+          <p className="text-[10px] text-[#1D9E75] font-black">✓ Marked as submitted. Verification is done by an admin.</p>
         )}
       </div>
 

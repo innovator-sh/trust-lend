@@ -3,17 +3,9 @@ import { ethers } from 'ethers';
 import { useWallet } from '../context/WalletContext';
 import { ADDRESSES } from '../contracts/addresses';
 import LendingPoolABI from '../contracts/LendingPool.json';
+import { queryInChunks, addBlockTimes } from '../lib/chainEvents';
 
-const CHUNK = 5000;   // blocks per log request (public RPCs limit the range)
 const MAX_ITEMS = 20;
-
-async function queryInChunks(contract, filter, from, to) {
-  const out = [];
-  for (let start = from; start <= to; start += CHUNK) {
-    out.push(...await contract.queryFilter(filter, start, Math.min(start + CHUNK - 1, to)));
-  }
-  return out;
-}
 
 /**
  * The signed-in lender's deposits and withdrawals, read from LendingPool events.
@@ -55,11 +47,7 @@ export function useLenderActivity(refreshKey = 0) {
           })),
         ].sort((a, b) => b.block - a.block || b.index - a.index).slice(0, MAX_ITEMS);
 
-        const times = {};
-        for (const row of rows) {
-          if (!(row.block in times)) times[row.block] = (await provider.getBlock(row.block))?.timestamp ?? null;
-          row.time = times[row.block];
-        }
+        await addBlockTimes(provider, rows);
 
         if (!cancelled) { setItems(rows); setState('ready'); }
       } catch (err) {

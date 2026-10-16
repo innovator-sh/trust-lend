@@ -3,13 +3,16 @@ import AppShell from '../components/AppShell';
 import { useWallet } from '../context/WalletContext';
 import { useReputationNFT } from '../hooks/useReputationNFT';
 import { useLendingPool } from '../hooks/useLendingPool';
+import { useVouchSystem } from '../hooks/useVouchSystem';
 import Skeleton, { SkeletonRow } from '../components/Skeleton';
-import { ADDRESSES } from '../contracts/addresses';
+import { ADDRESSES, explorerAddrUrl } from '../contracts/addresses';
 
 export default function SovereignAudit() {
-  const { address } = useWallet();
+  const { walletAddress: address } = useWallet();
   const { reputationData, trustScore, hasNFT, isLoading: isNFTLoading, mintNFT } = useReputationNFT();
   const { borrowLimit, isLoading: isPoolLoading } = useLendingPool();
+  const { vouches, activeStake } = useVouchSystem();
+  const repaidCount = Number(reputationData?.loansRepaid || 0);
 
   const isLoading = isNFTLoading || isPoolLoading;
 
@@ -54,7 +57,7 @@ export default function SovereignAudit() {
                  <p className="text-[10px] font-black text-[#8C8C8C] uppercase tracking-widest mt-1 font-mono">ID: {address}</p>
                  <p className="text-[10px] font-black text-[#1D9E75] uppercase tracking-widest mt-1">Tier: {reputationData?.tier}</p>
                  <a 
-                    href={`https://amoy.polygonscan.com/token/${ADDRESSES.REPUTATION_NFT}?a=${tokenId}`} 
+                    href={explorerAddrUrl(ADDRESSES.REPUTATION_NFT)} 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="text-[10px] font-black text-[#F5A623] uppercase tracking-widest mt-2 block hover:underline"
@@ -69,8 +72,8 @@ export default function SovereignAudit() {
                  <p className="text-2xl font-black text-[#1A1A1A] dark:text-[#FAFAF8]">${Number(borrowLimit).toLocaleString()}</p>
               </div>
               <div className="text-center">
-                 <p className="text-[9px] font-black text-[#8C8C8C] uppercase tracking-widest mb-1">Global Percentile</p>
-                 <p className="text-2xl font-black text-[#F5A623]">Top {100 - Number(trustScore)}%</p>
+                 <p className="text-[9px] font-black text-[#8C8C8C] uppercase tracking-widest mb-1">Loans Repaid</p>
+                 <p className="text-2xl font-black text-[#F5A623]">{repaidCount}</p>
               </div>
            </div>
         </div>
@@ -95,10 +98,10 @@ export default function SovereignAudit() {
              
              <div className="mt-12 grid grid-cols-2 gap-6 w-full">
                 {[
-                  { label: 'Blockchain ID Proof', val: 'Verified' },
-                  { label: 'Social Vouching', val: `${trustScore > 40 ? 'Synced' : 'Pending'}` },
+                  { label: 'Reputation NFT', val: hasNFT ? 'Minted' : 'Missing' },
+                  { label: 'Active Vouch Stake', val: `${Number(activeStake || 0).toLocaleString()} TRUST` },
                   { label: 'Repayment Volume', val: `$${reputationData?.totalRepaid || 0}` },
-                  { label: 'Settlement Streak', val: `${reputationData?.repaymentStreak || 0} Tx Limit` }
+                  { label: 'Repayment Streak', val: `${reputationData?.repaymentStreak || 0}` }
                 ].map((s, i) => (
                   <div key={i} className="flex justify-between items-center p-4 rounded bg-[#FAFAF8] dark:bg-[#0A0F1E] border border-[#E8E8E8] dark:border-[#1E2A3A]">
                      <span className="text-[9px] font-black text-[#8C8C8C] uppercase tracking-widest">{s.label}</span>
@@ -116,8 +119,8 @@ export default function SovereignAudit() {
                    {[
                      { label: 'Web3 Wallet Signature', status: 'Completed', icon: 'lucide:badge-check', active: true },
                      { label: 'Soulbound NFT Mint', status: hasNFT ? 'Completed' : 'Missing', icon: 'lucide:fingerprint', active: hasNFT },
-                     { label: 'Decentralized Social Nodes', status: '80% Synced', icon: 'lucide:link', active: true },
-                     { label: 'On-chain Governance History', status: 'Insufficient', icon: 'lucide:clock', active: false }
+                     { label: 'Vouches Received', status: vouches.length > 0 ? `${vouches.length} vouch${vouches.length === 1 ? '' : 'es'}` : 'None yet', icon: 'lucide:link', active: vouches.length > 0 },
+                     { label: 'Repayment History', status: repaidCount > 0 ? `${repaidCount} repaid` : 'None yet', icon: 'lucide:clock', active: repaidCount > 0 }
                    ].map((v, i) => (
                      <div key={i} className={`flex items-center justify-between p-6 rounded-xl border transition-all ${v.active ? 'bg-[#1D9E75]/5 border-[#1D9E75]/20' : 'bg-[#FAFAF8] dark:bg-[#0A0F1E] border-[#E8E8E8] dark:border-[#1E2A3A]'}`}>
                         <div className="flex items-center gap-4">
@@ -132,7 +135,7 @@ export default function SovereignAudit() {
 
              <div className="p-8 rounded-[12px] bg-[#F59E0B]/5 border border-[#F59E0B]/10">
                 <p className="text-[10px] font-black text-[#F59E0B] uppercase tracking-widest mb-2">Insight</p>
-                <p className="text-[10px] text-[#1A1A1A] dark:text-[#FAFAF8] leading-relaxed">Completing the **"On-chain Governance"** module will likely augment your on-chain credibility by **+12 pts** and unlock up to a **$1,000.00** limit.</p>
+                <p className="text-[10px] text-[#1A1A1A] dark:text-[#FAFAF8] leading-relaxed">Repaying a loan on time raises your score. Your limit grows when the score reaches 40, 60 and 80, up to $500. The limit rules are fixed in the contract and are not an AI estimate.</p>
              </div>
           </div>
         </div>

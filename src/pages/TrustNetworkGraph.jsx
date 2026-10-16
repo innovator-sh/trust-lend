@@ -10,9 +10,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 const shortAddr = (a = '') => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—';
 
 export default function TrustNetworkGraph() {
-  const { vouches, vouchRequests, isLoading } = useVouchSystem();
+  const { vouches, vouchRequests, activeStake, isLoading } = useVouchSystem();
   const { trustScore } = useReputationNFT();
-  const { address } = useWallet();
+  const { walletAddress: address } = useWallet();
   const navigate = useNavigate();
   const svgRef = useRef(null);
   const [selectedNode, setSelectedNode] = useState(null);
@@ -183,8 +183,8 @@ export default function TrustNetworkGraph() {
                       <p className="text-2xl font-black text-[#F59E0B] font-cabinet">{vouchRequests.length}</p>
                    </div>
                    <div className="flex justify-between items-end">
-                      <p className="text-[10px] font-bold text-[#8C8C8C] uppercase tracking-widest">Network Growth</p>
-                      <p className="text-2xl font-black text-[#1D9E75] font-cabinet">12% MoM</p>
+                      <p className="text-[10px] font-bold text-[#8C8C8C] uppercase tracking-widest">Active Stake</p>
+                      <p className="text-2xl font-black text-[#1D9E75] font-cabinet">{Number(activeStake || 0).toLocaleString()} TRUST</p>
                    </div>
                 </div>
             </div>

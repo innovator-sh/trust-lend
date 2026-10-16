@@ -48,9 +48,9 @@ export default function Marketplace() {
         {/* Marketplace Summary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
             {[
-            { l: t('marketplace.totalLiquidity'),   v: isLoading ? '...' : `$${Number(poolStats?.liquidity || 0).toLocaleString()}`, c: '#1D9E75' },
+            { l: t('marketplace.totalLiquidity'),   v: isLoading ? '...' : `$${Number(poolStats?.liquidity || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, c: '#1D9E75' },
             { l: t('marketplace.activeLoans'),      v: isLoading ? '...' : poolStats?.activeLoans || 0, c: '#F5A623' },
-            { l: t('marketplace.lenderCount'),      v: isLoading ? '...' : poolStats?.lenderCount || 0, c: '#FAFAF8' },
+            { l: t('marketplace.lenderCount'),      v: isLoading ? '...' : poolStats?.lenderCount || 0, c: '#3B82F6' },
             { l: t('marketplace.averageReturn'),    v: isLoading ? '...' : `${Number(poolStats?.avgInterestRate || 0)}%`, c: '#1D9E75' },
             ].map((m, i) => (
             <div key={i} className="bg-white dark:bg-[#111827] p-6 rounded-2xl border border-[#E8E8E8] dark:border-[#1E2A3A]">

@@ -14,7 +14,7 @@ const daysLeft = (dueTime) => {
 };
 
 export default function ActiveLoanDetail() {
-  const { address } = useWallet();
+  const { walletAddress: address } = useWallet();
   const navigate = useNavigate();
   
   const { userLoan, isLoading: isLoanLoading } = useLendingPool();

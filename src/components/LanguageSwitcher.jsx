@@ -24,7 +24,7 @@ export default function LanguageSwitcher() {
     <div className="relative z-[100]">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#F5A623]/20 bg-[#111827]/40 text-[10px] font-black uppercase tracking-widest text-[#8C8C8C] hover:border-[#F5A623]/50 hover:text-[#FAFAF8] transition-all duration-300"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#F5A623]/30 bg-white dark:bg-[#111827]/40 text-[10px] font-black uppercase tracking-widest text-[#6B6B6B] dark:text-[#8C8C8C] hover:border-[#F5A623]/60 hover:text-[#1A1A1A] dark:hover:text-[#FAFAF8] transition-all duration-300"
       >
         <iconify-icon icon="lucide:languages" className="text-sm text-[#F5A623]"></iconify-icon>
         <span className="hidden md:inline">{currentLanguage.native}</span>

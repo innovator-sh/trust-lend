@@ -87,7 +87,9 @@ export function useLendingPool() {
             setBorrowLimit(ethers.formatUnits(limit, 18));
             
             const loan = await contract.getLoan(walletAddress);
-            if (loan && loan.amount > 0n) {
+            // LoanStatus.Active is 0, so an empty record also reads as 0. Check the amount too.
+            // A repaid or defaulted loan is history, not an active loan.
+            if (loan && loan.amount > 0n && Number(loan.status) === 0) {
                 const owed = await contract.getTotalOwed(walletAddress);
                 setUserLoan({
                     amount: ethers.formatUnits(loan.amount, 18),

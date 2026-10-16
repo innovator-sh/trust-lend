@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { upsertUser } from '../lib/supabase';
 import { buildSignInMessage, saveSession, verifySession } from '../lib/session';
+import { useWallet } from '../context/WalletContext';
 
 /* ── Ethereum / MetaMask helpers ── */
 async function connectMetaMask() {
@@ -54,6 +55,7 @@ const STEPS = ['Connect', 'Sign', 'Verify', 'Done'];
 
 export default function ConnectWallet() {
   const navigate = useNavigate();
+  const { connectWallet } = useWallet();
   const [phase, setPhase]     = useState(0); // 0=idle, 1=connecting, 2=signing, 3=verifying, 4=done, -1=error
   const [error, setError]     = useState('');
   const [wallet, setWallet]   = useState('');
@@ -80,6 +82,8 @@ export default function ConnectWallet() {
 
       // persist the signed session so protected pages can check it again
       saveSession({ address, message, signature });
+      // Tell the wallet context now, so every page can read the chain without a reload.
+      await connectWallet();
 
       // Phase 4 – done
       setPhase(4);

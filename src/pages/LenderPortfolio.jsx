@@ -27,7 +27,9 @@ export default function LenderPortfolio() {
 
   const value = num(lenderPosition.value);
   const principal = num(lenderPosition.principal);
-  const earned = num(lenderPosition.yieldEarned);
+  // Share rounding can leave a dust amount. Show it as zero.
+  const earnedRaw = num(lenderPosition.yieldEarned);
+  const earned = Math.abs(earnedRaw) < 0.005 ? 0 : earnedRaw;
   const free = num(poolStats.liquidity);
   const onLoan = num(poolUsage.onLoan);
   const poolValue = num(poolUsage.poolValue);
