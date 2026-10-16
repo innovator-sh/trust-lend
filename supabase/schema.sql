@@ -36,12 +36,6 @@ create table if not exists public.users (
   uid                 text unique default ('TL-' || upper(substr(md5(random()::text || clock_timestamp()::text), 1, 6))),
   did                 text generated always as ('did:ethr:' || wallet_address) stored,
   display_name        text,
-  residential_address text,
-  phone               text,
-  email               text,
-  monthly_income      numeric,
-  kyc_aadhar          text,
-  kyc_pan             text,
   kyc_status          text not null default 'pending'
                       check (kyc_status in ('pending', 'submitted', 'verified', 'rejected')),
   role                text check (role in ('borrower', 'lender', 'both')),
@@ -52,6 +46,16 @@ create table if not exists public.users (
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
 );
+
+-- The app collects no phone, email, address, income or ID numbers. Re-running this file on an
+-- older database removes those columns and any data in them.
+alter table public.users
+  drop column if exists residential_address,
+  drop column if exists phone,
+  drop column if exists email,
+  drop column if exists monthly_income,
+  drop column if exists kyc_aadhar,
+  drop column if exists kyc_pan;
 
 drop trigger if exists users_set_updated_at on public.users;
 create trigger users_set_updated_at
@@ -126,11 +130,12 @@ $$;
 -- policies therefore allow the publishable (anon) key to read, insert and update.
 -- Deletes stay blocked.
 --
--- Before any real user data is stored (KYC fields: Aadhaar, PAN, phone, email, income):
+-- The app stores no personal data: only a wallet address, a display name, a role, loan records
+-- and public chain data. Do not add personal data columns while these policies are open.
+-- Before any real personal data is stored:
 --   1. Verify the SIWE signature in a Supabase Edge Function.
 --   2. Return a JWT that carries the wallet address.
---   3. Replace "using (true)" below with a check on that wallet claim,
---      and move the KYC columns into a table the browser cannot read.
+--   3. Replace "using (true)" below with a check on that wallet claim.
 
 do $$
 declare t text;
@@ -152,18 +157,21 @@ end $$;
 -- be able to set that value, so only the database owner or the service role can.
 -- Verify a user in the SQL Editor (it runs as the owner), for example:
 --   update public.users set kyc_status = 'verified' where wallet_address = '0xabc...';
--- A browser request (role anon) can set 'pending' or 'submitted' only.
+-- A browser request (role anon) cannot change kyc_status, trust_score or tier.
 
 create or replace function public.guard_kyc_status()
 returns trigger language plpgsql as $$
 begin
   if current_user not in ('postgres', 'service_role', 'supabase_admin') then
     if tg_op = 'INSERT' then
-      new.kyc_status := case when new.kyc_status = 'submitted' then 'submitted' else 'pending' end;
-    elsif new.kyc_status is distinct from old.kyc_status then
-      if new.kyc_status in ('verified', 'rejected') or old.kyc_status in ('verified', 'rejected') then
-        raise exception 'kyc_status can only be changed by an admin';
-      end if;
+      new.kyc_status := 'pending';
+      new.trust_score := 30;           -- the contract holds the real score
+      new.tier := 'Entry';
+    else
+      -- A browser request cannot change these. Only the database owner can.
+      new.kyc_status := old.kyc_status;
+      new.trust_score := old.trust_score;
+      new.tier := old.tier;
     end if;
   end if;
   return new;

@@ -10,12 +10,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 const shortAddr = (a = '') => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—';
 
 export default function TrustNetworkGraph() {
-  const { vouches, vouchRequests, activeStake, isLoading } = useVouchSystem();
+  const { vouches, vouchRequests, activeStake } = useVouchSystem();
   const { trustScore } = useReputationNFT();
   const { walletAddress: address } = useWallet();
   const navigate = useNavigate();
   const svgRef = useRef(null);
-  const [selectedNode, setSelectedNode] = useState(null);
+  const [, setSelectedNode] = useState(null);
 
   useEffect(() => {
     if (!svgRef.current || !address) return;

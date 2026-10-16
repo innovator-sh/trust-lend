@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import AppShell from '../components/AppShell';
-import { useTheme } from '../context/ThemeContext';
 import { useTransactionHistory } from '../hooks/useTransactionHistory';
 import { SkeletonRow } from '../components/Skeleton';
 import { explorerTxUrl } from '../contracts/addresses';
@@ -13,7 +12,6 @@ const TABS = [
 ];
 
 export default function TransactionHistory() {
-  const { isDarkMode } = useTheme();
   const { transactions: all, isLoading, state } = useTransactionHistory();
   const [tab, setTab] = useState('all');
   const transactions = tab === 'all' ? all : all.filter((tx) => tx.category === tab);

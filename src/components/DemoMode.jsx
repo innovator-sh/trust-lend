@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useDemo } from '../context/DemoContext';
-import { useWallet } from '../context/WalletContext';
 
 export default function DemoMode() {
   const { isDemoMode, setIsDemoMode, initializeDemoWallets } = useDemo();
-  const { chainId, isSupported } = useWallet();
 
   useEffect(() => {
     const handleKeyDown = (e) => {

@@ -23,7 +23,13 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // `motion` is used as <motion.div>, which this rule does not see.
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]|^motion$' }],
     },
+  },
+  {
+    // Context and helper files export hooks and constants next to components on purpose.
+    files: ['src/context/**', 'src/utils/**'],
+    rules: { 'react-refresh/only-export-components': 'off' },
   },
 ])

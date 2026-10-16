@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ethers } from 'ethers';
-import { getUser, updateUser } from '../lib/supabase';
+import { updateUser } from '../lib/supabase';
 import { useWallet } from '../context/WalletContext';
 import { ADDRESSES } from '../contracts/addresses';
 import TrustTokenABI from '../contracts/TrustToken.json';
@@ -305,15 +305,7 @@ function StepTrustScore({ wallet, snapshot, onNext }) {
 
 /* ═══════════════════════ STEP 3 – Profile + Role ═══════════════════════ */
 function StepProfile({ wallet, user, onNext, setRole: setParentRole }) {
-  const [form, setForm] = useState({
-    display_name: '',
-    residential_address: '',
-    phone: '',
-    email: '',
-    monthly_income: '',
-    kyc_aadhar: '',
-    kyc_pan: '',
-  });
+  const [form, setForm] = useState({ display_name: '' });
   const [role, setRole]     = useState('');
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -323,8 +315,6 @@ function StepProfile({ wallet, user, onNext, setRole: setParentRole }) {
   const validate = () => {
     const e = {};
     if (!form.display_name.trim())  e.display_name = 'Required';
-    if (!form.phone.match(/^\d{10}$/)) e.phone = '10-digit number required';
-    if (form.email && !form.email.includes('@')) e.email = 'Invalid email';
     if (!role) e.role = 'Please select a role';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -333,16 +323,10 @@ function StepProfile({ wallet, user, onNext, setRole: setParentRole }) {
   const save = async () => {
     if (!validate()) return;
     setSaving(true);
-    const kycStatus = (form.kyc_aadhar || form.kyc_pan) ? 'submitted' : 'pending';
+    // Only a display name and a role are stored. The app collects no phone, email,
+    // address, income or ID numbers.
     await updateUser(wallet, {
       display_name: form.display_name.trim(),
-      residential_address: form.residential_address.trim(),
-      phone: form.phone.trim(),
-      email: form.email.trim(),
-      monthly_income: form.monthly_income ? parseFloat(form.monthly_income) : null,
-      kyc_aadhar: form.kyc_aadhar.trim() || null,
-      kyc_pan: form.kyc_pan.trim().toUpperCase() || null,
-      kyc_status: kycStatus,
       role,
     });
     setParentRole(role);
@@ -360,7 +344,7 @@ function StepProfile({ wallet, user, onNext, setRole: setParentRole }) {
         <p className="text-[10px] font-black uppercase tracking-widest text-[#F5A623] mb-2">Step 3 of 4</p>
         <h2 className="font-cabinet font-black text-3xl text-[#FAFAF8] tracking-tight">Your Profile</h2>
         <p className="text-[#8C8C8C] text-sm mt-2 leading-relaxed">
-          Build your on-chain identity. This is a testnet prototype: details are saved as plain text in the app database. Do not enter real ID numbers.
+          Choose a display name. An alias is fine. TrustLend does not ask for a phone number, email, home address or ID number.
         </p>
       </div>
 
@@ -385,54 +369,15 @@ function StepProfile({ wallet, user, onNext, setRole: setParentRole }) {
         <TextInput value={shortAddr(wallet)} onChange={() => {}} readOnly />
       </Field>
 
-      {/* Personal Info */}
-      <Field label="Full Name" required>
-        <TextInput value={form.display_name} onChange={set('display_name')} placeholder="Kunal Sharma" />
+      <Field label="Display Name" required>
+        <TextInput value={form.display_name} onChange={set('display_name')} placeholder="Any name or alias" />
         {err('display_name')}
       </Field>
 
-      <Field label="Residential Address">
-        <textarea
-          value={form.residential_address}
-          onChange={set('residential_address')}
-          placeholder="123, MG Road, Bengaluru, Karnataka 560001"
-          rows={2}
-          className={`${inputCls} resize-none`}
-        />
-      </Field>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Phone" required>
-          <TextInput value={form.phone} onChange={set('phone')} placeholder="9876543210" type="tel" />
-          {err('phone')}
-        </Field>
-        <Field label="Email">
-          <TextInput value={form.email} onChange={set('email')} placeholder="kunal@email.com" type="email" />
-          {err('email')}
-        </Field>
-      </div>
-
-      <Field label="Monthly Income (₹)">
-        <TextInput value={form.monthly_income} onChange={set('monthly_income')} placeholder="35000" type="number" />
-      </Field>
-
-      {/* KYC */}
-      <div className="space-y-3 pt-2 border-t border-[#1E2A3A]">
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#8C8C8C] pt-1">
-          KYC Documents <span className="text-[#F5A623]">(optional — an admin must verify them before limits above $10 unlock)</span>
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Aadhaar Number">
-            <TextInput value={form.kyc_aadhar} onChange={set('kyc_aadhar')} placeholder="XXXX XXXX XXXX" />
-          </Field>
-          <Field label="PAN Number">
-            <TextInput value={form.kyc_pan} onChange={set('kyc_pan')} placeholder="ABCDE1234F" />
-          </Field>
-        </div>
-        {(form.kyc_aadhar || form.kyc_pan) && (
-          <p className="text-[10px] text-[#1D9E75] font-black">✓ Marked as submitted. Verification is done by an admin.</p>
-        )}
-      </div>
+      <p className="text-[11px] leading-relaxed text-[#8C8C8C]">
+        Identity checks (KYC) are not done in the app. An admin can mark a wallet as verified outside the app.
+        Only a verified wallet can borrow more than $10.
+      </p>
 
       {/* Role selection */}
       <div className="space-y-3 pt-2 border-t border-[#1E2A3A]">
@@ -592,7 +537,7 @@ export default function Onboarding() {
         }
       })
     );
-  }, [wallet]);
+  }, [wallet, navigate]);
 
   const next = () => setStep(s => s + 1);
 

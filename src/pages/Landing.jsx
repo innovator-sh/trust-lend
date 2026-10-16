@@ -79,8 +79,8 @@ function StepCard({ num, title, desc, delay }) {
 /* ─────────────── main component ─────────────── */
 export default function Landing() {
   const navigate = useNavigate();
-  const [walletConnecting, setWalletConnecting] = useState(false);
-  const [walletDone, setWalletDone] = useState(false);
+  const [walletConnecting] = useState(false);
+  const [walletDone] = useState(false);
   const poolStats = usePublicPoolStats();
 
   const handleConnectWallet = () => {

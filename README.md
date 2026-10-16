@@ -99,18 +99,22 @@ TrustLend is a testnet prototype. It uses test tokens and holds no real money.
 
 - [docs/risk-model.md](docs/risk-model.md) - the scoring and limit rules, what is not measured yet, and how the rules should change.
 - [docs/regulatory-position.md](docs/regulatory-position.md) - the legal position, with open points for a lawyer. It is not legal advice.
+- [docs/deploy.md](docs/deploy.md) - the steps to put the contracts on Polygon Amoy and the app and the ML service online.
+- [docs/demo-script.md](docs/demo-script.md) - a six-minute demo plan and answers to likely questions.
 - [ml-api/README.md](ml-api/README.md) - the machine-learning service: what each model does, how a score is derived, where the inputs come from, and how well the models were measured. The scores are advice only. They do not change your on-chain score.
 - The Landing page shows numbers read from the contract, including the measured default rate. It shows "No data yet" until a loan is finished.
 - Sign-in uses a signed message that the app checks on each protected page. This is a browser check only. The database still needs server-side rules before it holds real data.
 
 ## Roadmap
 
-- Add a test suite for the contracts
+- Check the sign-in signature on a server, and add database rules for each wallet
+- Move contract ownership to a multisig wallet
+- Add a proof-of-unique-person check against sybil attacks in vouching
+- Base interest on the loan term
 - Add support for more than one blockchain
 - Improve the PWA for mobile devices
-- Add detection of fraud and sybil attacks in vouching
 - Add more currencies and stablecoins
 
 ## License
 
-This project is for academic and educational use only.
+MIT. See [LICENSE](LICENSE). The contracts carry the same license in their SPDX headers.

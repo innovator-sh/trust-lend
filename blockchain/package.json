@@ -1,5 +1,6 @@
 {
   "name": "trustlend-blockchain",
+  "license": "MIT",
   "version": "1.0.0",
   "description": "TrustLend smart contracts \u2014 Hardhat workspace",
   "scripts": {

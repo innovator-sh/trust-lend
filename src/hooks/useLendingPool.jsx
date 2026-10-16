@@ -126,7 +126,7 @@ export function useLendingPool() {
     } finally {
       setIsLoading(false);
     }
-  }, [provider, walletAddress, isDemoMode, demoStateOverrides, simulateTx]);
+  }, [provider, walletAddress, isDemoMode, demoStateOverrides]);
 
   useEffect(() => {
     fetchData();

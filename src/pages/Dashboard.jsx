@@ -8,6 +8,7 @@ import { useReputationNFT } from '../hooks/useReputationNFT';
 import { useLendingPool } from '../hooks/useLendingPool';
 import { useVouchSystem } from '../hooks/useVouchSystem';
 import { useTransactionHistory } from '../hooks/useTransactionHistory';
+import { currentTimeMs } from '../utils/time';
 import { getTier, TIER_COLORS } from '../utils/constants';
 import Skeleton from '../components/Skeleton';
 
@@ -33,9 +34,8 @@ function StatCard({ label, value, sub, subColor = '#8C8C8C', accent = false, chi
 
 function LoanHealthBar({ loan }) {
   const { t } = useTranslation();
-  const total = Number(loan.amount);
   const due = loan.dueDate;
-  const now = Date.now();
+  const now = currentTimeMs();
   const start = loan.startTime;
   const pct = Math.min(100, Math.max(0, ((now - start) / (due - start)) * 100));
   const urgency = pct < 50 ? '#1D9E75' : pct < 80 ? '#F59E0B' : '#EF4444';
@@ -65,10 +65,8 @@ export default function Dashboard() {
 
   const { trustScore, isLoading: isRepLoading } = useReputationNFT();
   const { borrowLimit, userLoan, poolStats, isLoading: isPoolLoading } = useLendingPool();
-  const { vouches, isLoading: isVouchLoading } = useVouchSystem();
-  const { transactions, isLoading: isTxLoading } = useTransactionHistory();
-
-  const loading = isRepLoading || isPoolLoading || isVouchLoading || isTxLoading;
+  const { vouches } = useVouchSystem();
+  const { transactions } = useTransactionHistory();
 
   const score = Number(trustScore) || 30; // fallback default
   const tier = getTier(score);

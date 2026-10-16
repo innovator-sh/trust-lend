@@ -1,4 +1,5 @@
 // Fails when the code asks for a translation key that en.json does not define.
+// Also fails when hi, gu or mr lack a key that en.json has (those would show English text).
 // A missing key shows its own name on screen (for example "marketplace.activeLoans").
 // Run: npm run check:i18n
 
@@ -43,4 +44,18 @@ if (missing.size) {
   for (const [key, where] of [...missing].sort()) console.error(`  ${key}  <- ${[...where].join(', ')}`);
   process.exit(1);
 }
-console.log('i18n check passed: every t() key exists in en.json.');
+// Every other language must have every English key.
+const flat = (obj, prefix = '') => Object.entries(obj).flatMap(([k, v]) =>
+  v && typeof v === 'object' ? flat(v, `${prefix}${k}.`) : [`${prefix}${k}`]);
+const enKeys = flat(en);
+let gaps = 0;
+for (const lang of ['hi', 'gu', 'mr']) {
+  const other = new Set(flat(JSON.parse(readFileSync(join(srcDir, `i18n/locales/${lang}.json`), 'utf8'))));
+  const lacking = enKeys.filter((k) => !other.has(k));
+  if (lacking.length) {
+    gaps += lacking.length;
+    console.error(`${lang}.json lacks ${lacking.length} key(s): ${lacking.slice(0, 5).join(', ')}${lacking.length > 5 ? ', ...' : ''}`);
+  }
+}
+if (gaps) process.exit(1);
+console.log('i18n check passed: every t() key exists in en.json, and hi, gu and mr have every key.');

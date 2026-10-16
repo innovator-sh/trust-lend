@@ -8,8 +8,8 @@ import { ADDRESSES } from '../contracts/addresses';
 
 export default function DemoHealthCheck() {
   const { search } = useLocation();
-  const { isConnected, isSupported, walletAddress, provider, signer } = useWallet();
-  const { poolStats, borrowLimit, userLoan } = useLendingPool();
+  const { isConnected, isSupported, walletAddress, provider } = useWallet();
+  const { poolStats, userLoan } = useLendingPool();
   const { trustScore } = useReputationNFT();
   
   const [balance, setBalance] = useState("0");

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../components/AppShell';
-import { useTheme } from '../context/ThemeContext';
 import { useWallet } from '../context/WalletContext';
 import { useLendingPool } from '../hooks/useLendingPool';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +9,6 @@ import toast from 'react-hot-toast';
 
 export default function Marketplace() {
   const { t } = useTranslation();
-  const { isDarkMode } = useTheme();
   const { walletAddress } = useWallet();
   const navigate = useNavigate();
 

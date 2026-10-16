@@ -78,6 +78,16 @@ export function WalletProvider({ children }) {
     hydrateEthers(lower);
   }, [hydrateEthers]);
 
+  const disconnectWallet = useCallback(() => {
+    setWalletAddress('');
+    setChainId(0);
+    setProvider(null);
+    setSigner(null);
+    setBalance('0.00');
+    setIsConnected(false);
+    clearSession();
+  }, []);
+
   useEffect(() => {
     if (!window.ethereum) return;
     const autoReconnect = async () => {
@@ -128,7 +138,7 @@ export function WalletProvider({ children }) {
       window.ethereum.removeListener('accountsChanged', onAccountsChanged);
       window.ethereum.removeListener('chainChanged',    onChainChanged);
     };
-  }, [walletAddress, setAccount, hydrateEthers]);
+  }, [walletAddress, setAccount, hydrateEthers, disconnectWallet]);
 
   const connectWallet = useCallback(async () => {
     if (!window.ethereum) {
@@ -166,16 +176,6 @@ export function WalletProvider({ children }) {
         });
       }
     }
-  }, []);
-
-  const disconnectWallet = useCallback(() => {
-    setWalletAddress('');
-    setChainId(0);
-    setProvider(null);
-    setSigner(null);
-    setBalance('0.00');
-    setIsConnected(false);
-    clearSession();
   }, []);
 
   return (

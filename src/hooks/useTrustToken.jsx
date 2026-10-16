@@ -8,7 +8,7 @@ import { useWallet } from '../context/WalletContext';
 import TrustTokenABI from '../contracts/TrustToken.json';
 import { ADDRESSES } from '../contracts/addresses';
 import { useDemo } from '../context/DemoContext';
-import { showTxLoading, showTxSuccess, showTxError } from '../utils/txToast';
+import { showTxLoading, showTxSuccess, showTxError, TX_CONFIRMED_EVENT } from '../utils/txToast';
 import { translateContractError } from '../utils/contractErrors';
 
 const POLL_INTERVAL = 30_000;
@@ -45,7 +45,12 @@ export function useTrustToken() {
   useEffect(() => {
     fetchBalances();
     intervalRef.current = setInterval(fetchBalances, POLL_INTERVAL);
-    return () => clearInterval(intervalRef.current);
+    // Refresh at once after any confirmed transaction, not only on the 30 s poll.
+    window.addEventListener(TX_CONFIRMED_EVENT, fetchBalances);
+    return () => {
+      clearInterval(intervalRef.current);
+      window.removeEventListener(TX_CONFIRMED_EVENT, fetchBalances);
+    };
   }, [fetchBalances]);
 
   const claimTestTokens = useCallback(async () => {

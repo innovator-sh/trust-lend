@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLendingPool } from '../hooks/useLendingPool';
 import { useVouchSystem } from '../hooks/useVouchSystem';
+import { useReputationNFT } from '../hooks/useReputationNFT';
 import { createLoan, updateLoan, getUser, getTier, TIER_LIMITS, TIER_COLORS, nextTierInfo, NO_KYC_LIMIT } from '../lib/supabase';
 import {
   isBlockchainReady,
@@ -356,17 +357,19 @@ export default function LoanFlow() {
   const [amount, setAmount] = useState(0);
   const { borrowLimit } = useLendingPool();
   const { activeStake } = useVouchSystem();
+  const { hasNFT, trustScore: chainScore } = useReputationNFT();
   const [loan, setLoan]     = useState(null);
   const [txHash, setTxHash] = useState('');
   const [user, setUser]     = useState(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+  const [loadingUser, setLoadingUser] = useState(Boolean(wallet));
 
   useEffect(() => {
-    if (!wallet) { setLoadingUser(false); return; }
+    if (!wallet) return;
     getUser(wallet).then(u => { setUser(u); setLoadingUser(false); });
   }, [wallet]);
 
-  const score  = user?.trust_score ?? 30;
+  // The contract holds the real score. The database copy is only a fallback before the first loan.
+  const score  = hasNFT ? Number(chainScore) : (user?.trust_score ?? 30);
   const tier   = getTier(score);
   const tierLimit = TIER_LIMITS[tier];
   // Loans above the entry amount need verified KYC. An admin sets kyc_status = 'verified'.

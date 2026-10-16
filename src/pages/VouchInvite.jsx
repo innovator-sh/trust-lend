@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import AppShell from '../components/AppShell';
 import { useVouchSystem } from '../hooks/useVouchSystem';
@@ -11,7 +10,6 @@ import { useTranslation } from 'react-i18next';
 const shortAddr = (a = '') => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—';
 
 export default function VouchInvite() {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { walletAddress: address } = useWallet();
   const { vouchRequests, createVouchRequest, stakeForBorrower, isLoading } = useVouchSystem();

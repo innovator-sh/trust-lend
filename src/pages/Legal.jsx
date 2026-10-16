@@ -49,10 +49,12 @@ export default function Legal() {
 
         <Section title="3. Data we collect">
           <p>
-            Your wallet address and the profile you enter in onboarding: name, address, phone,
-            email, monthly income, and optional Aadhaar and PAN numbers. This data is stored in
+            Your wallet address, a display name (an alias is fine) and your role. We also store
+            your loan records and a read-only snapshot of public chain data. This data is stored in
             a Supabase database. In this prototype the database rules are open, so treat every
-            value as <strong>not private</strong>. Do not enter real personal or identity data.
+            value as <strong>not private</strong>. The app does not collect phone numbers, email
+            addresses, home addresses, income or ID numbers (such as Aadhaar or PAN). Do not enter
+            real personal data in the display name.
           </p>
           <p>
             Blockchain records (loans, repayments, scores) are public and cannot be deleted.

@@ -27,7 +27,11 @@ export function showTxLoading(message = "Confirming transaction...") {
     return toast.loading(message);
 }
 
+// Other parts of the page (for example the header balance) listen for this event.
+export const TX_CONFIRMED_EVENT = 'tl:tx-confirmed';
+
 export function showTxSuccess(actionLabel, hash, toastId) {
+    window.dispatchEvent(new Event(TX_CONFIRMED_EVENT));
     const content = (
         <div className="flex flex-col">
             <span className="font-bold">✓ {actionLabel} confirmed!</span>

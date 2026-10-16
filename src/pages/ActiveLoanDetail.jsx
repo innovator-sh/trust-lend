@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import { useWallet } from '../context/WalletContext';
 import { useLendingPool } from '../hooks/useLendingPool';
+import { currentTimeMs } from '../utils/time';
 import { useVouchSystem } from '../hooks/useVouchSystem';
 import { motion } from 'framer-motion';
 import Skeleton, { SkeletonCard } from '../components/Skeleton';
@@ -50,7 +51,7 @@ export default function ActiveLoanDetail() {
 
   const start = userLoan.startTime;
   const due = userLoan.dueDate;
-  const now = Date.now();
+  const now = currentTimeMs();
   const pct = Math.min(100, Math.max(0, ((now - start) / (due - start)) * 100));
   
   // Calculate array for timeline UI

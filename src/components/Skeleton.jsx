@@ -41,7 +41,7 @@ export function SkeletonCard({ lines = 3, h = 'auto' }) {
       <Skeleton w="40%" h="12px" />
       <Skeleton w="60%" h="28px" />
       {Array.from({ length: lines - 2 }).map((_, i) => (
-        <Skeleton key={i} w={`${60 + Math.random() * 30}%`} h="14px" />
+        <Skeleton key={i} w={`${60 + ((i * 17) % 30)}%`} h="14px" />
       ))}
     </div>
   );

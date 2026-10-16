@@ -6,7 +6,6 @@ import { useLendingPool } from '../hooks/useLendingPool';
 import { useReputationNFT } from '../hooks/useReputationNFT';
 import { useTrustToken } from '../hooks/useTrustToken';
 import Skeleton from '../components/Skeleton';
-import toast from 'react-hot-toast';
 import { ethers } from 'ethers';
 import { ADDRESSES } from '../contracts/addresses';
 import ReputationNFTABI from '../contracts/ReputationNFT.json';

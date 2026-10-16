@@ -32,13 +32,14 @@ It holds no real money, has no licence, and says so in the app (testnet notice a
   licensed partner, not a free-mint token.
 
 ### Personal data and KYC
-- The Digital Personal Data Protection Act, 2023 applies to the personal data the app
-  collects (name, address, phone, email, income, identity numbers).
-- Aadhaar numbers have extra limits on who may collect and store them. The prototype stores the
-  number as plain text. A production version must not do this. Use a licensed identity
-  provider and store only a verification result.
+- The prototype collects no phone number, email, address, income or ID number. It stores a
+  wallet address, a display name, a role and loan records. The Digital Personal Data Protection
+  Act, 2023 would still apply to a production service that stores personal data.
+- Aadhaar numbers have extra limits on who may collect and store them. A production version
+  must use a licensed identity provider and store only a verification result. It must not
+  store the number.
 - In the prototype the database policies are open, so stored data is not private
-  (see `supabase/schema.sql`).
+  (see `supabase/schema.sql`). Do not add personal-data columns until the policies are closed.
 
 ## What the project does today to stay honest
 
@@ -48,6 +49,7 @@ It holds no real money, has no licence, and says so in the app (testnet notice a
 | Fixed platform statistics | Replaced by numbers read from the contract |
 | Test status | Notice on every page and Terms & Privacy page (`/terms`) |
 | Faucet | Switched off by `deploy.js` on non-test networks |
+| Personal data | Not collected. The onboarding form asks only for a display name and a role |
 | Loans above $10 | Need `kyc_status = verified`, which only a database admin can set |
 | Sign-in | Signed message, checked again on each protected page |
 

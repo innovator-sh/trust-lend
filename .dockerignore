@@ -1,0 +1,10 @@
+# Keep the image small and free of local files and secrets.
+**/node_modules
+**/.venv
+**/__pycache__
+dist
+blockchain
+.git
+.env*
+**/.env*
+*.log
