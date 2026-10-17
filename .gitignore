@@ -34,3 +34,6 @@ blockchain/.env.*
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# The original ML files have unknown training data. They are not shipped. See ml-api/README.md.
+ml-api/models/original/

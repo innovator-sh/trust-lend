@@ -1,6 +1,6 @@
 """Feature names, value ranges and fixed rules shared by training and serving.
 
-The ranges follow the scales the ORIGINAL models were trained on. The original trust model
+The ranges follow the scales of the first prototype, which the retrained models keep. The first prototype's trust model
 splits voucher_quality between 20 and 100, vouch_network_balance between 0 and 2, and so on.
 Feeding it values on another scale (for example voucher_quality 0..1) gives wrong scores.
 """

@@ -1,7 +1,10 @@
-"""Load a model set. A file loads only when its SHA-256 matches models/<set>/metadata.json.
+"""Load a model set. Two checks apply to every file before it is used.
 
-joblib files are pickles, and loading a pickle can run code. The hash check means the server
-only loads the exact files that were reviewed and committed with that metadata.
+1. Its SHA-256 must match models/<set>/metadata.json (stops a file that changed by accident).
+2. It must pass app/safe_pickle.py, which refuses any class outside a short allowed list
+   (stops a file that was swapped on purpose, even if its hash was swapped too).
+
+joblib files are pickles, and loading a normal pickle can run code.
 """
 
 import hashlib
@@ -12,14 +15,18 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-import joblib
+from app.safe_pickle import UnsafeModelFile, restricted_load
 
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 VALID_SETS = ("retrained", "original")
 
 
 class ModelIntegrityError(RuntimeError):
-    """A model file does not match its pinned hash."""
+    """A model file does not match its pinned hash, or asks for a class that is not allowed."""
+
+
+class ModelSetMissing(ModelIntegrityError):
+    """The model set is not installed in this build (for example `original`, which is not shipped)."""
 
 
 @dataclass(frozen=True)
@@ -44,6 +51,8 @@ def load_bundle(set_name: str) -> ModelBundle:
     if set_name not in VALID_SETS:
         raise ValueError(f"Unknown model set '{set_name}'")
     directory = MODELS_DIR / set_name
+    if not (directory / "metadata.json").exists():
+        raise ModelSetMissing(f"The model set '{set_name}' is not installed in this build.")
     metadata = json.loads((directory / "metadata.json").read_text(encoding="utf-8"))
 
     loaded = {}
@@ -54,7 +63,10 @@ def load_bundle(set_name: str) -> ModelBundle:
             raise ModelIntegrityError(
                 f"{path.name} does not match the hash in metadata.json. Refusing to load it."
             )
-        loaded[key] = joblib.load(path)
+        try:
+            loaded[key] = restricted_load(path)
+        except UnsafeModelFile as exc:
+            raise ModelIntegrityError(str(exc)) from exc
 
     schedule = loaded["schedule"]  # a dict: {"model": KMeans, "mapping": {cluster: name}}
     return ModelBundle(

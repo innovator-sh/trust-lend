@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from app import scoring
 from app.chain import ChainUnavailable, get_reader
 from app.features import TRUST_RANGES
-from app.model_store import ModelIntegrityError, get_bundle
+from app.model_store import ModelIntegrityError, ModelSetMissing, get_bundle
 
 DISCLAIMER = (
     "Advisory only. The models are trained on synthetic or unverified data and have not been "
@@ -55,6 +55,8 @@ async def rate_limit(request: Request, call_next):
 def _bundle():
     try:
         return get_bundle()
+    except ModelSetMissing as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ModelIntegrityError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

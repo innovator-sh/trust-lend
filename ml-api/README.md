@@ -37,8 +37,8 @@ any database row. The on-chain score comes only from the rules in `LendingPool.s
 | `vouch_network_balance` | 0-2 | (Vouches given + 1) / (vouches received + 1). 1 = balanced |
 | `transaction_frequency` | 0-100 | Loan and repayment transactions per month |
 
-The scales follow what the **original** models were trained on. Other scales give wrong scores
-(for example, the original model splits `voucher_quality` between 20 and 100).
+The scales follow the scales the first prototype used, which the retrained models keep. Other scales
+give wrong scores (for example, `voucher_quality` runs from 20 to 100).
 
 ## Where the inputs come from
 
@@ -62,29 +62,53 @@ A wallet with **no finished loan** gets no trust estimate ("insufficient history
 2. Vouchers with an average age under 7 days are flagged (hard rule).
 3. An Isolation Forest trained on normal wallets flags unusual combinations of the three inputs.
 
-## Two model sets
+## Model sets
 
-Choose with `ML_MODEL_SET` (default `retrained`).
+The service ships one set, `retrained`, and uses it by default (`ML_MODEL_SET=retrained`).
 
-| | `retrained` (default) | `original` |
-| :-- | :-- | :-- |
-| Source | `training/train.py`, reproducible | The team's first prototype files |
-| Training data | Synthetic, documented in `training/synth_data.py` | Unknown. Script and data are not available |
-| Trust model | Random Forest, 150 trees | Random Forest, 100 trees, depth 10 |
-| Anomaly model | Isolation Forest, contamination 0.02 | Isolation Forest, contamination **0.1** |
-| Schedule model | K-Means, 3 clusters | K-Means, 3 clusters |
-| Measured | Yes (below) | No |
+| | `retrained` (shipped) |
+| :-- | :-- |
+| Source | `training/train.py`, reproducible |
+| Training data | Synthetic, documented in `training/synth_data.py` |
+| Trust model | Random Forest, 150 trees |
+| Anomaly model | Isolation Forest, contamination 0.02 |
+| Schedule model | K-Means, 3 clusters |
+| Measured | Yes (below) |
 
-Known problems of the `original` set, found while inspecting it:
+An `original` set (the files from the team's first prototype) is **not shipped** in this repository.
+Nobody has the training script or the training data, so the files cannot be rebuilt or checked, and
+a trained model can reveal facts about its training data. The folder `models/original/` is gitignored.
+The code can still use such a set if you register your own trusted copy
+(`python -m training.register_original "<folder>"`, then `ML_MODEL_SET=original`). If the set is not
+installed, the API answers 503 with a clear message.
 
-- Contamination 0.1 means it flags about 10% of its own training wallets as anomalies by design. A normal wallet with a closed-ring score of 0 (outside its training range) is flagged too.
-- It scores a borrower with one repaid and one defaulted loan at 83 with a $500 limit. The retrained model gives 50 and $50 for the same inputs.
-- The earlier prototype UI sent it features on the wrong scale (`voucher_quality` 0-1 instead of 20-100), which made its scores unreliable.
+Problems found in the original set before it was removed: its anomaly model flagged about 10% of
+its own training wallets by design (contamination 0.1), it scored a borrower with one repaid and one
+defaulted loan at 83 with a $500 limit (the retrained model gives 50 and $50), and the earlier
+prototype UI sent it features on the wrong scale.
 
-Every model file is loaded only if its SHA-256 matches `models/<set>/metadata.json`. `joblib` files are
-pickles and loading one can run code, so the hash check keeps the server to the reviewed files.
-The original files were inspected with a restricted reader that allows only numpy, scipy and scikit-learn
-classes (`training/register_original.py`).
+## Safe loading of model files
+
+A `joblib` file is a pickle, and loading a normal pickle can run any code the file names. Two checks
+protect the server before a file is used:
+
+1. **Hash check.** The file's SHA-256 must match `models/<set>/metadata.json`. This catches a file
+   that changed by accident.
+2. **Allowed-class check** (`app/safe_pickle.py`). The loader refuses any class outside a short list:
+   six scikit-learn model classes and five numpy and joblib helpers that rebuild arrays. A file that
+   asks for anything else is refused before that code is created. This stops a file that was swapped
+   on purpose, even when its hash in `metadata.json` was swapped too.
+
+`tests/test_safe_pickle.py` proves both: a file that would call a function is refused and the function
+does not run, and so is a swapped file with a matching hash. The same test fails if a retrained file
+needs a class that is not on the list.
+
+Rules for anyone who contributes a model file:
+- Never accept a model file from someone you do not trust, and never load one with plain `joblib.load`.
+- A pull request that changes `models/` or `app/safe_pickle.py` needs a review by the maintainer
+  (see `.github/CODEOWNERS`).
+- After retraining, commit the new files with their `metadata.json`. If the allowed-class test fails,
+  read why before you add a class to the list.
 
 ## Measured quality of the retrained set (synthetic data)
 
@@ -116,7 +140,7 @@ In the app, set `VITE_ML_API_URL=http://localhost:8000` in `.env.local`.
 
 | Variable | Default | Purpose |
 | :-- | :-- | :-- |
-| `ML_MODEL_SET` | `retrained` | `retrained` or `original` |
+| `ML_MODEL_SET` | `retrained` | `retrained`, or `original` if you register your own trusted copy |
 | `ML_RPC_URL` | `http://127.0.0.1:8545` | Chain RPC |
 | `ML_POOL_ADDRESS`, `ML_NFT_ADDRESS`, `ML_VOUCH_ADDRESS` | from `addresses.js` | Contract addresses |
 | `ML_FROM_BLOCK` | `0` | First block to scan for events (set the deploy block on a live network) |

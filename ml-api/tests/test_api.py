@@ -20,8 +20,10 @@ RISKY = dict(repayment_history=0.2, repayment_speed=0.1, voucher_quality=25, loa
 
 @pytest.fixture(params=["retrained", "original"])
 def client(request, monkeypatch):
-    monkeypatch.setenv("ML_MODEL_SET", request.param)
     from app import model_store
+    if not (model_store.MODELS_DIR / request.param / "metadata.json").exists():
+        pytest.skip(f"model set '{request.param}' is not installed (the original set is not shipped)")
+    monkeypatch.setenv("ML_MODEL_SET", request.param)
     model_store.load_bundle.cache_clear()
     from app.main import app
     return TestClient(app)

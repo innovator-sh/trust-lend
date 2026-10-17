@@ -5,12 +5,16 @@ Run from the ml-api folder:
 
 What it does
 - Copies the three files to models/original/.
-- Reads each one with a RESTRICTED unpickler that only allows numpy, scipy and scikit-learn
-  classes, so the file cannot run other code while it is inspected.
+- Reads each one with app/safe_pickle.py, which allows only a short list of scikit-learn and
+  numpy classes, so the file cannot run other code while it is inspected. A file that needs
+  any other class is refused.
 - Writes models/original/metadata.json with the SHA-256 of every file and the model settings.
 
-The server only loads a model file when its hash matches this metadata.
+The server only loads a model file when its hash matches this metadata and it passes the same
+strict loader.
 The original training script and data are NOT available, so the provenance says so.
+These files are NOT shipped in the public repository (models/original/ is gitignored). Run this
+script only on a copy of the files that you trust.
 """
 
 import hashlib
@@ -21,9 +25,8 @@ import warnings
 from pathlib import Path
 
 import numpy as np
-from joblib.numpy_pickle import NumpyUnpickler
-
 from app.features import FRAUD_FEATURES, SCHEDULE_FEATURES, TRUST_FEATURES
+from app.safe_pickle import restricted_load
 
 OUT_DIR = Path(__file__).resolve().parent.parent / "models" / "original"
 FILES = {
@@ -31,30 +34,6 @@ FILES = {
     "fraud": ("fraud_model.joblib", FRAUD_FEATURES),
     "schedule": ("repayment_model.joblib", SCHEDULE_FEATURES),
 }
-
-ALLOWED_ROOTS = ("numpy", "sklearn", "scipy", "collections", "_codecs", "joblib")
-BLOCKED = {("builtins", n) for n in ("eval", "exec", "open", "__import__", "compile", "getattr", "setattr")}
-
-
-class SafeUnpickler(NumpyUnpickler):
-    """Creates only numpy / scipy / scikit-learn objects. Anything else raises."""
-
-    def find_class(self, module, name):
-        if (module, name) in BLOCKED:
-            raise RuntimeError(f"blocked {module}.{name}")
-        if module == "builtins":
-            if name in {"object", "dict", "list", "tuple", "set", "frozenset", "int", "float", "str", "bytes", "bool", "complex", "slice", "range"}:
-                return super().find_class(module, name)
-            raise RuntimeError(f"blocked builtins.{name}")
-        if module.split(".")[0] not in ALLOWED_ROOTS:
-            raise RuntimeError(f"blocked {module}.{name}")
-        return super().find_class(module, name)
-
-
-def safe_load(path: Path):
-    with open(path, "rb") as fh:
-        return SafeUnpickler(str(path), fh, ensure_native_byte_order=False).load()
-
 
 def describe(obj):
     if isinstance(obj, dict) and "model" in obj:
@@ -88,7 +67,7 @@ def main(source: str):
             "file": filename,
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
             "features": features,
-            "model": describe(safe_load(path)),
+            "model": describe(restricted_load(path)),
         }
         print(f"{key}: {files[key]['model']['class']}  sha256={files[key]['sha256'][:12]}...")
 
